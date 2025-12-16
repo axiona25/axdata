@@ -1,0 +1,44 @@
+{
+  "source_id": "eu_clinical_trials",
+  "name": "EU Clinical Trials Register",
+  "kind": "api",
+  "sectors": ["biomedical", "health"],
+  "subsectors": ["clinical_research", "trials"],
+  "data_types": ["tabular", "text", "event", "hybrid"],
+  "geo_coverage": {
+    "scope": "EU",
+    "levels": ["country"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "2004",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "search",
+      "path": "/ctr-search/search",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": false,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "EU Database Directive",
+    "url": "https://www.clinicaltrialsregister.eu/about.html",
+    "commercial_use": true,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "European Medicines Agency"
+  },
+  "reliability": {
+    "uptime_score": 0.99,
+    "rate_limit_per_min": 60
+  }
+}

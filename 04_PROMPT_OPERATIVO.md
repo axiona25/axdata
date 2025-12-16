@@ -1,0 +1,2 @@
+# Prompt Operativo (da incollare in Cursor dopo aver letto le doc)
+Obiettivo: costruire un portale web “Dataset On-Demand” con backend FastAPI + PostgreSQL + Redis/Celery + object storage, frontend React TS, collector service separato e chat OpenAI per generare DatasetPlan e orchestrare pipeline (collect→normalize→export→pay→deliver). Implementare MVP con 3 connector (WorldBank, Eurostat, PubMed), export CSV/JSON/Parquet, pagamenti Stripe Checkout e storico dataset/fatture per utente.

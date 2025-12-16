@@ -1,0 +1,44 @@
+{
+  "source_id": "cern_opendata",
+  "name": "CERN Open Data Portal",
+  "kind": "api",
+  "sectors": ["physics"],
+  "subsectors": ["particle_physics", "research"],
+  "data_types": ["tabular", "hybrid"],
+  "geo_coverage": {
+    "scope": "global",
+    "levels": ["global"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "2008",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "api",
+      "path": "/api",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": false,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "CC0 1.0 Universal",
+    "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "commercial_use": true,
+    "attribution_required": false
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "CERN"
+  },
+  "reliability": {
+    "uptime_score": 0.99,
+    "rate_limit_per_min": 100
+  }
+}

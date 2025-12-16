@@ -1,0 +1,44 @@
+{
+  "source_id": "global_carbon",
+  "name": "Global Carbon Atlas",
+  "kind": "api",
+  "sectors": ["environment"],
+  "subsectors": ["climate", "emissions"],
+  "data_types": ["tabular", "time_series", "cross_sectional"],
+  "geo_coverage": {
+    "scope": "global",
+    "levels": ["country", "region"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "1750",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "api",
+      "path": "/api",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": true,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "CC BY 4.0",
+    "url": "https://creativecommons.org/licenses/by/4.0/",
+    "commercial_use": true,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 4,
+    "publisher": "Global Carbon Project"
+  },
+  "reliability": {
+    "uptime_score": 0.97,
+    "rate_limit_per_min": 60
+  }
+}

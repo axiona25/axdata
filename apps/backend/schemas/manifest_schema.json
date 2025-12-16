@@ -1,0 +1,304 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataset-portal.com/schemas/manifest-universale-v1.0.json",
+  "title": "Manifest Universale Dataset v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifest_version",
+    "dataset_id",
+    "title",
+    "domain",
+    "created_at",
+    "creator",
+    "sources",
+    "files",
+    "license",
+    "citation"
+  ],
+  "properties": {
+    "manifest_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "dataset_id": {
+      "type": "string",
+      "description": "UUID v4 del dataset (versione specifica).",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    },
+    "dataset_family_id": {
+      "type": "string",
+      "description": "UUID v4 per raggruppare versioni dello stesso dataset (opzionale).",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Versione semantica (es. 1.0.0) o build id.",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 5000
+    },
+    "domain": {
+      "type": "string",
+      "description": "Dominio disciplinare.",
+      "enum": ["economics", "biomedical", "physics", "math", "demography", "general"]
+    },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 50 },
+      "maxItems": 50
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "creator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "system", "contact"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "system": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["platform", "backend_version"],
+          "properties": {
+            "platform": { "type": "string", "minLength": 1 },
+            "backend_version": { "type": "string", "minLength": 1 },
+            "collector_version": { "type": "string" },
+            "normalizer_version": { "type": "string" }
+          }
+        },
+        "contact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["email"],
+          "properties": {
+            "email": { "type": "string", "format": "email" },
+            "url": { "type": "string", "format": "uri" }
+          }
+        }
+      }
+    },
+    "owner": {
+      "type": "object",
+      "description": "Riferimenti interni (multi-tenant). Non includere dati sensibili.",
+      "additionalProperties": false,
+      "properties": {
+        "user_id": { "type": "string", "minLength": 1 },
+        "org_id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["connector", "source_name", "retrieved_at", "queries"],
+        "properties": {
+          "connector": { "type": "string", "minLength": 1 },
+          "source_name": { "type": "string", "minLength": 1 },
+          "source_type": {
+            "type": "string",
+            "enum": ["api", "repository", "download", "scrape", "manual"],
+            "default": "api"
+          },
+          "base_url": { "type": "string", "format": "uri" },
+          "retrieved_at": { "type": "string", "format": "date-time" },
+          "license": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "url": { "type": "string", "format": "uri" },
+              "notes": { "type": "string", "maxLength": 2000 }
+            }
+          },
+          "queries": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["query_id", "params"],
+              "properties": {
+                "query_id": { "type": "string", "minLength": 1 },
+                "endpoint": { "type": "string" },
+                "params": { "type": "object" },
+                "request_hash": { "type": "string" },
+                "result_summary": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "rows": { "type": "integer", "minimum": 0 },
+                    "bytes": { "type": "integer", "minimum": 0 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "transformations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["step_id", "type", "applied_at"],
+        "properties": {
+          "step_id": { "type": "string", "minLength": 1 },
+          "type": {
+            "type": "string",
+            "enum": [
+              "filter",
+              "select_columns",
+              "rename_columns",
+              "cast_types",
+              "normalize_dates",
+              "join",
+              "aggregate",
+              "deduplicate",
+              "missing_values",
+              "outlier_handling",
+              "unit_conversion",
+              "text_cleaning",
+              "sampling",
+              "custom"
+            ]
+          },
+          "params": { "type": "object" },
+          "applied_at": { "type": "string", "format": "date-time" },
+          "input_assets": { "type": "array", "items": { "type": "string" } },
+          "output_assets": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "schema_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "row_count": { "type": "integer", "minimum": 0 },
+        "column_count": { "type": "integer", "minimum": 0 },
+        "primary_keys": { "type": "array", "items": { "type": "string" } },
+        "time_granularity": {
+          "type": "string",
+          "enum": ["year", "quarter", "month", "day", "hour", "event", "unknown"]
+        },
+        "geo_granularity": {
+          "type": "string",
+          "enum": ["country", "region", "city", "grid", "unknown"]
+        },
+        "units": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "format", "uri", "checksum", "bytes", "mime_type"],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": ["data", "manifest", "data_dictionary", "provenance", "readme", "other"]
+          },
+          "format": {
+            "type": "string",
+            "enum": ["csv", "json", "parquet", "xlsx", "pdf", "txt", "zip"]
+          },
+          "uri": { "type": "string", "minLength": 1 },
+          "checksum": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["algo", "value"],
+            "properties": {
+              "algo": { "type": "string", "enum": ["sha256", "md5"] },
+              "value": { "type": "string", "minLength": 8 }
+            }
+          },
+          "bytes": { "type": "integer", "minimum": 0 },
+          "mime_type": { "type": "string", "minLength": 3 }
+        }
+      }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "format": "uri" },
+        "restrictions": { "type": "string", "maxLength": 4000 }
+      }
+    },
+    "citation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["preferred"],
+      "properties": {
+        "preferred": { "type": "string", "minLength": 3, "maxLength": 2000 },
+        "bibtex": { "type": "string", "maxLength": 8000 },
+        "sources_citations": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 2000 }
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "validation_passed": { "type": "boolean" },
+        "null_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "duplicate_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "notes": { "type": "string", "maxLength": 4000 }
+      }
+    },
+    "billing": {
+      "type": "object",
+      "description": "Metadati transazione (senza dati sensibili).",
+      "additionalProperties": false,
+      "properties": {
+        "payment_provider": { "type": "string", "enum": ["stripe", "paypal", "none"] },
+        "payment_status": {
+          "type": "string",
+          "enum": ["unpaid", "pending", "paid", "refunded", "failed"]
+        },
+        "payment_reference": { "type": "string" },
+        "amount": { "type": "number", "minimum": 0 },
+        "currency": { "type": "string", "minLength": 3, "maxLength": 3 }
+      }
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "data_classification": {
+          "type": "string",
+          "enum": ["public", "restricted", "confidential"],
+          "default": "public"
+        },
+        "contains_personal_data": { "type": "boolean", "default": false },
+        "notes": { "type": "string", "maxLength": 2000 }
+      }
+    }
+  }
+}
+

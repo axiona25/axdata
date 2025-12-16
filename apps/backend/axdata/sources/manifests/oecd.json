@@ -1,0 +1,44 @@
+{
+  "source_id": "oecd",
+  "name": "OECD Statistics API",
+  "kind": "api",
+  "sectors": ["economy", "society", "health", "education", "environment"],
+  "subsectors": ["statistics", "development"],
+  "data_types": ["tabular", "time_series", "cross_sectional", "panel"],
+  "geo_coverage": {
+    "scope": "global",
+    "levels": ["country", "region"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "1960",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "sdmx",
+      "path": "/SDMX-JSON/data",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": true,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "OECD Terms and Conditions",
+    "url": "https://www.oecd.org/termsandconditions/",
+    "commercial_use": true,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "Organisation for Economic Co-operation and Development"
+  },
+  "reliability": {
+    "uptime_score": 0.98,
+    "rate_limit_per_min": 100
+  }
+}

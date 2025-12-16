@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://axdata.eu/schemas/ds-spec-v1.json",
+  "title": "AXDATA DS-SPEC v1",
+  "type": "object",
+  "required": ["version", "sector", "request", "dimensions", "variables", "output"],
+  "properties": {
+    "version": { "type": "string", "const": "1.0" },
+    "request": {
+      "type": "object",
+      "required": ["query_text", "language"],
+      "properties": {
+        "query_text": { "type": "string", "minLength": 3 },
+        "language": { "type": "string", "default": "it" },
+        "user_role": { "type": "string", "enum": ["general", "researcher", "data_scientist"], "default": "general" }
+      }
+    },
+    "sector": { "type": "string" },
+    "subsector": { "type": "string", "nullable": true },
+    "dimensions": {
+      "type": "object",
+      "required": ["time", "geo", "entity"],
+      "properties": {
+        "time": {
+          "type": "object",
+          "required": ["enabled"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "start": { "type": "string", "description": "YYYY-MM-DD or YYYY", "nullable": true },
+            "end": { "type": "string", "description": "YYYY-MM-DD or YYYY", "nullable": true },
+            "granularity": { "type": "string", "enum": ["hour", "day", "week", "month", "quarter", "year", "none"], "default": "none" }
+          }
+        },
+        "geo": {
+          "type": "object",
+          "required": ["enabled"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "scope": { "type": "string", "description": "e.g. EU, IT, global", "nullable": true },
+            "level": { "type": "string", "enum": ["global", "country", "region", "province", "city", "point", "polygon", "none"], "default": "none" },
+            "crs": { "type": "string", "default": "EPSG:4326" }
+          }
+        },
+        "entity": {
+          "type": "object",
+          "required": ["kind"],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": ["none", "person", "organization", "facility", "country", "region", "product", "study", "document", "custom"]
+            },
+            "tracking": { "type": "boolean", "default": false },
+            "id_strategy": { "type": "string", "enum": ["native", "mapped", "hash"], "default": "mapped" }
+          }
+        }
+      }
+    },
+    "variables": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "string", "enum": ["numeric", "categorical", "text", "event", "geo"] },
+          "unit": { "type": "string", "nullable": true },
+          "preferred_sources": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "required": ["template", "formats", "quality", "compliance"],
+      "properties": {
+        "template": {
+          "type": "string",
+          "enum": ["tabular", "time_series", "cross_sectional", "panel", "geospatial", "text", "event", "hybrid", "auto"],
+          "default": "auto"
+        },
+        "formats": { "type": "array", "items": { "type": "string", "enum": ["csv", "parquet", "json", "geojson"] }, "default": ["csv"] },
+        "quality": {
+          "type": "object",
+          "properties": {
+            "min_completeness": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.85 },
+            "deduplicate": { "type": "boolean", "default": true }
+          }
+        },
+        "compliance": {
+          "type": "object",
+          "properties": {
+            "allow_pii": { "type": "boolean", "default": false },
+            "license_policy": { "type": "string", "enum": ["strict", "normal"], "default": "normal" }
+          }
+        }
+      }
+    }
+  }
+}

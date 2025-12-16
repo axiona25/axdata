@@ -1,0 +1,44 @@
+{
+  "source_id": "eurostat",
+  "name": "Eurostat API",
+  "kind": "api",
+  "sectors": ["economy", "health", "society", "environment"],
+  "subsectors": ["statistics"],
+  "data_types": ["tabular", "time_series", "cross_sectional"],
+  "geo_coverage": {
+    "scope": "EU",
+    "levels": ["country", "region"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "1990",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "datasets",
+      "path": "/api/dissemination/statistics/1.0/data",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": true,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "Eurostat reuse policy",
+    "url": "https://ec.europa.eu/eurostat",
+    "commercial_use": true,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "European Commission"
+  },
+  "reliability": {
+    "uptime_score": 0.98,
+    "rate_limit_per_min": 120
+  }
+}

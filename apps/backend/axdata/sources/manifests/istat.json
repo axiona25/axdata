@@ -1,0 +1,44 @@
+{
+  "source_id": "istat",
+  "name": "ISTAT (Italian National Statistics)",
+  "kind": "api",
+  "sectors": ["economy", "society", "health", "demography"],
+  "subsectors": ["statistics"],
+  "data_types": ["tabular", "time_series", "cross_sectional"],
+  "geo_coverage": {
+    "scope": "IT",
+    "levels": ["country", "region", "province", "city"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "1950",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "sdmx",
+      "path": "/SDMXWS/rest/data",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": true,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "Italian Open Data License",
+    "url": "https://www.istat.it/it/note-legali",
+    "commercial_use": true,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "Istituto Nazionale di Statistica"
+  },
+  "reliability": {
+    "uptime_score": 0.97,
+    "rate_limit_per_min": 60
+  }
+}

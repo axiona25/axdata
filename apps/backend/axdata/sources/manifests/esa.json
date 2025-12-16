@@ -1,0 +1,44 @@
+{
+  "source_id": "esa",
+  "name": "ESA Open Data Portal",
+  "kind": "api",
+  "sectors": ["physics", "environment"],
+  "subsectors": ["space", "earth_observation"],
+  "data_types": ["tabular", "time_series", "geospatial", "hybrid"],
+  "geo_coverage": {
+    "scope": "global",
+    "levels": ["global", "point", "polygon"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "1978",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "data",
+      "path": "/api",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": true,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "ESA Open Data License",
+    "url": "https://www.esa.int/About_Us/Law_at_ESA/ESA_Open_Data_Policy",
+    "commercial_use": true,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "European Space Agency"
+  },
+  "reliability": {
+    "uptime_score": 0.98,
+    "rate_limit_per_min": 100
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "source_id": "un_data",
+  "name": "UN Data API",
+  "kind": "api",
+  "sectors": ["economy", "society", "health", "demography", "environment"],
+  "subsectors": ["statistics", "development"],
+  "data_types": ["tabular", "time_series", "cross_sectional"],
+  "geo_coverage": {
+    "scope": "global",
+    "levels": ["country", "region"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "1950",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "data",
+      "path": "/api/data",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": true,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "UN Data Terms of Use",
+    "url": "https://www.un.org/en/about-us/terms-of-use",
+    "commercial_use": true,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "United Nations"
+  },
+  "reliability": {
+    "uptime_score": 0.98,
+    "rate_limit_per_min": 100
+  }
+}

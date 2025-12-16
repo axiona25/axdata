@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataset-portal.com/schemas/collector-request-v1.0.json",
+  "title": "CollectorRequest v1.0",
+  "description": "Standard request format from Backend to API Collector",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "connector_name",
+    "query_id",
+    "params"
+  ],
+  "properties": {
+    "connector_name": {
+      "type": "string",
+      "description": "Connector identifier (must match registered connector)",
+      "minLength": 1,
+      "maxLength": 50,
+      "enum": [
+        "eurostat",
+        "worldbank",
+        "pubmed",
+        "clinicaltrials",
+        "who_gho",
+        "imf",
+        "oecd",
+        "un_data",
+        "istat",
+        "cern_opendata",
+        "nasa_opendata",
+        "pangaea",
+        "openml"
+      ]
+    },
+    "query_id": {
+      "type": "string",
+      "description": "Unique identifier for this query (from DatasetPlan)",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "params": {
+      "type": "object",
+      "description": "Query parameters specific to connector (structure varies by connector)",
+      "additionalProperties": true
+    },
+    "dataset_step_id": {
+      "type": "string",
+      "description": "Optional: Backend dataset step ID for traceability",
+      "format": "uuid"
+    },
+    "pagination": {
+      "type": "object",
+      "description": "Pagination parameters if applicable",
+      "additionalProperties": false,
+      "properties": {
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000,
+          "default": 1000
+        }
+      }
+    },
+    "options": {
+      "type": "object",
+      "description": "Optional collection options",
+      "additionalProperties": false,
+      "properties": {
+        "save_to_storage": {
+          "type": "boolean",
+          "description": "Whether to save raw data to object storage",
+          "default": true
+        },
+        "include_metadata": {
+          "type": "boolean",
+          "description": "Whether to include detailed metadata",
+          "default": true
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "description": "Request timeout in seconds",
+          "minimum": 1,
+          "maximum": 600,
+          "default": 300
+        }
+      }
+    }
+  }
+}
+

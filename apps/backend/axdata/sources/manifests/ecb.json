@@ -1,0 +1,44 @@
+{
+  "source_id": "ecb",
+  "name": "ECB Statistical Data Warehouse",
+  "kind": "api",
+  "sectors": ["economy", "finance"],
+  "subsectors": ["monetary_policy", "statistics"],
+  "data_types": ["tabular", "time_series", "cross_sectional"],
+  "geo_coverage": {
+    "scope": "EU",
+    "levels": ["country", "region"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "1990",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "sdmx",
+      "path": "/service/data",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": true,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "ECB Terms of Use",
+    "url": "https://www.ecb.europa.eu/stats/ecb_statistical_terms_of_use/html/index.en.html",
+    "commercial_use": true,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "European Central Bank"
+  },
+  "reliability": {
+    "uptime_score": 0.99,
+    "rate_limit_per_min": 100
+  }
+}

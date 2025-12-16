@@ -1,0 +1,44 @@
+{
+  "source_id": "pubmed",
+  "name": "PubMed API",
+  "kind": "api",
+  "sectors": ["biomedical", "health"],
+  "subsectors": ["research", "publications"],
+  "data_types": ["text", "hybrid"],
+  "geo_coverage": {
+    "scope": "global",
+    "levels": ["country"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "1950",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "search",
+      "path": "/entrez/eutils/esearch.fcgi",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": false,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "Public Domain",
+    "url": "https://www.ncbi.nlm.nih.gov/home/about/policies/",
+    "commercial_use": true,
+    "attribution_required": false
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "National Center for Biotechnology Information"
+  },
+  "reliability": {
+    "uptime_score": 0.99,
+    "rate_limit_per_min": 10
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "source_id": "clinicaltrials",
+  "name": "ClinicalTrials.gov API",
+  "kind": "api",
+  "sectors": ["biomedical", "health"],
+  "subsectors": ["clinical_research", "trials"],
+  "data_types": ["tabular", "text", "event", "hybrid"],
+  "geo_coverage": {
+    "scope": "global",
+    "levels": ["country"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "2000",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "query",
+      "path": "/api/query/study_fields",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": false,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "Public Domain",
+    "url": "https://clinicaltrials.gov/about-site/terms-conditions",
+    "commercial_use": true,
+    "attribution_required": false
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "U.S. National Library of Medicine"
+  },
+  "reliability": {
+    "uptime_score": 0.99,
+    "rate_limit_per_min": 10
+  }
+}

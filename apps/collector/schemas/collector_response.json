@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataset-portal.com/schemas/collector-response-v1.0.json",
+  "title": "CollectorResponse v1.0",
+  "description": "Standard response format from API Collector to Backend. All connectors MUST return this format.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "connector",
+    "query_id",
+    "retrieved_at",
+    "records",
+    "metadata",
+    "provenance"
+  ],
+  "properties": {
+    "connector": {
+      "type": "string",
+      "description": "Connector identifier (e.g., 'eurostat', 'worldbank', 'pubmed', 'clinicaltrials', 'who_gho')",
+      "minLength": 1,
+      "maxLength": 50
+    },
+    "query_id": {
+      "type": "string",
+      "description": "Unique identifier for this query (from DatasetPlan)",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "retrieved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when data was retrieved from source"
+    },
+    "records": {
+      "type": "array",
+      "description": "Raw data records from source (list of objects, structure depends on source)",
+      "items": {
+        "type": "object",
+        "description": "Record structure varies by connector, but should be consistent within a connector"
+      },
+      "minItems": 0
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["row_count"],
+      "properties": {
+        "row_count": {
+          "type": "integer",
+          "description": "Number of records returned",
+          "minimum": 0
+        },
+        "bytes": {
+          "type": "integer",
+          "description": "Approximate size in bytes of raw data",
+          "minimum": 0
+        },
+        "columns": {
+          "type": "array",
+          "description": "Column names detected in records (optional, for validation)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "source_specific": {
+          "type": "object",
+          "description": "Connector-specific metadata (optional, structure varies)",
+          "additionalProperties": true
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_name",
+        "base_url"
+      ],
+      "properties": {
+        "source_name": {
+          "type": "string",
+          "description": "Human-readable source name (e.g., 'Eurostat API', 'World Bank Open Data')",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "base_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Base URL of the source API/repository"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "Specific endpoint or resource path used",
+          "maxLength": 500
+        },
+        "params_snapshot": {
+          "type": "object",
+          "description": "Snapshot of query parameters sent to source (for reproducibility)",
+          "additionalProperties": true
+        },
+        "request_hash": {
+          "type": "string",
+          "description": "SHA256 hash of request (endpoint + params) for deduplication",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "license": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "License name (e.g., 'CC BY 4.0', 'Eurostat reuse policy')",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "URL to license text"
+            },
+            "notes": {
+              "type": "string",
+              "description": "Additional license information or restrictions",
+              "maxLength": 2000
+            }
+          }
+        },
+        "pagination": {
+          "type": "object",
+          "description": "Pagination information if applicable",
+          "additionalProperties": false,
+          "properties": {
+            "page": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "page_size": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "total_pages": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "total_records": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "has_more": {
+              "type": "boolean"
+            }
+          }
+        },
+        "rate_limit_info": {
+          "type": "object",
+          "description": "Rate limiting information (for monitoring)",
+          "additionalProperties": false,
+          "properties": {
+            "remaining": {
+              "type": "integer",
+              "description": "Remaining requests in current window",
+              "minimum": 0
+            },
+            "reset_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "When rate limit window resets"
+            }
+          }
+        }
+      }
+    },
+    "storage_path": {
+      "type": "string",
+      "description": "Optional: S3 path where raw data was saved (for large datasets)",
+      "maxLength": 1000
+    },
+    "errors": {
+      "type": "array",
+      "description": "Non-fatal errors or warnings encountered during collection",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["message"],
+        "properties": {
+          "message": {
+            "type": "string",
+            "minLength": 1
+          },
+          "code": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["warning", "error", "info"]
+          }
+        }
+      }
+    }
+  }
+}
+

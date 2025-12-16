@@ -1,0 +1,44 @@
+{
+  "source_id": "wid",
+  "name": "World Inequality Database",
+  "kind": "api",
+  "sectors": ["economy", "society"],
+  "subsectors": ["inequality", "economics"],
+  "data_types": ["tabular", "time_series", "cross_sectional", "panel"],
+  "geo_coverage": {
+    "scope": "global",
+    "levels": ["country", "region"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "1820",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "api",
+      "path": "/api",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": true,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "CC BY-NC-SA 4.0",
+    "url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "commercial_use": false,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "World Inequality Lab"
+  },
+  "reliability": {
+    "uptime_score": 0.98,
+    "rate_limit_per_min": 60
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "source_id": "uci_ml",
+  "name": "UCI Machine Learning Repository",
+  "kind": "dataset",
+  "sectors": ["math"],
+  "subsectors": ["machine_learning", "data_science"],
+  "data_types": ["tabular"],
+  "geo_coverage": {
+    "scope": "global",
+    "levels": ["global"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "1987",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "archive",
+      "path": "/ml",
+      "method": "GET",
+      "supports": {
+        "time": false,
+        "geo": false,
+        "pagination": false
+      }
+    }
+  ],
+  "license": {
+    "name": "UCI ML Repository License",
+    "url": "https://archive.ics.uci.edu/ml/citation_policy.html",
+    "commercial_use": true,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 4,
+    "publisher": "University of California, Irvine"
+  },
+  "reliability": {
+    "uptime_score": 0.95,
+    "rate_limit_per_min": 10
+  }
+}

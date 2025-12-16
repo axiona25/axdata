@@ -1,0 +1,97 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@theme {
+  /* Dark theme colors from mockup */
+  --color-dark-primary: #1A1E24;
+  --color-dark-secondary: #222B36;
+  --color-dark-card: #2B3644;
+  --color-dark-accent: #1770EF;
+  --color-dark-accent-dark: #0F61DA;
+  
+  /* Accent colors */
+  --color-accent-blue: #3B82F6;
+  --color-accent-orange: #F59E0B;
+  
+  /* Text colors - use as custom properties in components */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A0AEC0;
+  
+  /* Border radius */
+  --radius-card: 12px;
+  --radius-input: 8px;
+  --radius-button: 8px;
+  
+  /* Font family */
+  --font-sans: 'Inter', 'Arial', 'Helvetica', sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-dark-primary);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    min-height: 100vh;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
+}
+
+@layer components {
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-accent-blue focus:border-transparent transition-all;
+    background-color: var(--color-dark-card);
+    color: var(--color-text-primary);
+    border-radius: var(--radius-input);
+}
+  
+  .input-field::placeholder {
+    color: var(--color-text-secondary);
+}
+
+  .btn-primary {
+    @apply px-6 py-3 text-white font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-accent-blue focus:ring-offset-2 transition-all;
+    background-color: var(--color-accent-blue);
+    border-radius: var(--radius-button);
+}
+
+  .btn-secondary {
+    @apply px-6 py-3 text-white font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-accent-orange focus:ring-offset-2 transition-all;
+    background-color: var(--color-accent-orange);
+    border-radius: var(--radius-button);
+  }
+  
+  .btn-outline {
+    @apply px-6 py-3 bg-transparent border-2 font-medium hover:text-white focus:outline-none focus:ring-2 focus:ring-accent-blue focus:ring-offset-2 transition-all;
+    border-color: var(--color-accent-blue);
+    color: var(--color-accent-blue);
+    border-radius: var(--radius-button);
+}
+  
+  .btn-outline:hover {
+    background-color: var(--color-accent-blue);
+  }
+  
+  .card {
+    @apply p-6 shadow-lg;
+    background-color: var(--color-dark-card);
+    border-radius: var(--radius-card);
+}
+
+  .modal-overlay {
+    @apply fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4;
+    background-color: rgba(0, 0, 0, 0.6);
+  }
+  
+  .modal-content {
+    @apply shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto;
+    background-color: var(--color-dark-card);
+    border-radius: var(--radius-card);
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "source_id": "imf",
+  "name": "IMF Data API",
+  "kind": "api",
+  "sectors": ["economy", "finance"],
+  "subsectors": ["macroeconomics", "financial_statistics"],
+  "data_types": ["tabular", "time_series", "cross_sectional", "panel"],
+  "geo_coverage": {
+    "scope": "global",
+    "levels": ["country", "region"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "1948",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "datamapper",
+      "path": "/api/v1",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": true,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "IMF Terms and Conditions",
+    "url": "https://www.imf.org/external/terms.htm",
+    "commercial_use": true,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "International Monetary Fund"
+  },
+  "reliability": {
+    "uptime_score": 0.99,
+    "rate_limit_per_min": 60
+  }
+}

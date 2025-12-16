@@ -1,0 +1,2 @@
+"""Tests for collector service."""
+

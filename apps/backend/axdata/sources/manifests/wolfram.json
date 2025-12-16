@@ -1,0 +1,44 @@
+{
+  "source_id": "wolfram",
+  "name": "Wolfram Data Repository",
+  "kind": "api",
+  "sectors": ["math", "physics", "economy"],
+  "subsectors": ["computational", "research"],
+  "data_types": ["tabular", "hybrid"],
+  "geo_coverage": {
+    "scope": "global",
+    "levels": ["global", "country"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "1900",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "reference",
+      "path": "/reference",
+      "method": "GET",
+      "supports": {
+        "time": false,
+        "geo": false,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "Wolfram Terms of Use",
+    "url": "https://www.wolfram.com/legal/",
+    "commercial_use": false,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 4,
+    "publisher": "Wolfram Research"
+  },
+  "reliability": {
+    "uptime_score": 0.97,
+    "rate_limit_per_min": 60
+  }
+}

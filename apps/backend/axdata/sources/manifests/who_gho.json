@@ -1,0 +1,44 @@
+{
+  "source_id": "who_gho",
+  "name": "WHO Global Health Observatory",
+  "kind": "api",
+  "sectors": ["health"],
+  "subsectors": ["epidemiology", "public_health"],
+  "data_types": ["tabular", "time_series", "cross_sectional"],
+  "geo_coverage": {
+    "scope": "global",
+    "levels": ["country", "region"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "2000",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "indicators",
+      "path": "/gho/athena/api/GHO/{indicator}",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": true,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "CC BY-NC-SA 3.0 IGO",
+    "url": "https://www.who.int/about/policies/publishing/copyright",
+    "commercial_use": false,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "World Health Organization"
+  },
+  "reliability": {
+    "uptime_score": 0.97,
+    "rate_limit_per_min": 60
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "source_id": "pangaea",
+  "name": "PANGAEA Data Publisher",
+  "kind": "api",
+  "sectors": ["environment", "physics"],
+  "subsectors": ["earth_science", "oceanography", "climate"],
+  "data_types": ["tabular", "time_series", "geospatial"],
+  "geo_coverage": {
+    "scope": "global",
+    "levels": ["global", "point", "polygon"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "1800",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "ws",
+      "path": "/ws",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": true,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "CC BY 3.0",
+    "url": "https://creativecommons.org/licenses/by/3.0/",
+    "commercial_use": true,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "PANGAEA"
+  },
+  "reliability": {
+    "uptime_score": 0.98,
+    "rate_limit_per_min": 60
+  }
+}

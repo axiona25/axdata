@@ -1,0 +1,44 @@
+{
+  "source_id": "ilo",
+  "name": "ILO Statistics API",
+  "kind": "api",
+  "sectors": ["economy", "society"],
+  "subsectors": ["labor", "employment"],
+  "data_types": ["tabular", "time_series", "cross_sectional", "panel"],
+  "geo_coverage": {
+    "scope": "global",
+    "levels": ["country", "region"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "1980",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "data",
+      "path": "/api/data",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": true,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "ILO Terms of Use",
+    "url": "https://www.ilo.org/global/terms-and-conditions/lang--en/index.htm",
+    "commercial_use": true,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "International Labour Organization"
+  },
+  "reliability": {
+    "uptime_score": 0.97,
+    "rate_limit_per_min": 60
+  }
+}

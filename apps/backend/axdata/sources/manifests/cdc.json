@@ -1,0 +1,44 @@
+{
+  "source_id": "cdc",
+  "name": "CDC Data API",
+  "kind": "api",
+  "sectors": ["health", "biomedical"],
+  "subsectors": ["public_health", "epidemiology"],
+  "data_types": ["tabular", "time_series", "cross_sectional", "event"],
+  "geo_coverage": {
+    "scope": "US",
+    "levels": ["country", "state", "county"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "1900",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "data",
+      "path": "/api/data",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": true,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "Public Domain",
+    "url": "https://www.cdc.gov/other/agencymaterials.html",
+    "commercial_use": true,
+    "attribution_required": false
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "Centers for Disease Control and Prevention"
+  },
+  "reliability": {
+    "uptime_score": 0.99,
+    "rate_limit_per_min": 100
+  }
+}

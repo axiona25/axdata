@@ -1,0 +1,44 @@
+{
+  "source_id": "openml",
+  "name": "OpenML",
+  "kind": "api",
+  "sectors": ["math"],
+  "subsectors": ["machine_learning", "data_science"],
+  "data_types": ["tabular", "hybrid"],
+  "geo_coverage": {
+    "scope": "global",
+    "levels": ["global"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "2013",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "api",
+      "path": "/api/v1",
+      "method": "GET",
+      "supports": {
+        "time": false,
+        "geo": false,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "CC BY 4.0",
+    "url": "https://creativecommons.org/licenses/by/4.0/",
+    "commercial_use": true,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 4,
+    "publisher": "OpenML Community"
+  },
+  "reliability": {
+    "uptime_score": 0.95,
+    "rate_limit_per_min": 60
+  }
+}

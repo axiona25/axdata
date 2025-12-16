@@ -1,0 +1,24 @@
+# HTTP Client
+httpx>=0.26.0
+tenacity>=8.2.0
+
+# Storage (S3-compatible)
+boto3>=1.34.0
+botocore>=1.34.0
+
+# FastAPI for health endpoint
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# Utilities
+python-multipart>=0.0.6
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# Copernicus Climate Data Store (optional - requires API key)
+ecmwf-datastores-client>=0.1.0
+

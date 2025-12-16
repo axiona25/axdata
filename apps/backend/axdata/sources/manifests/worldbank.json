@@ -1,0 +1,44 @@
+{
+  "source_id": "worldbank",
+  "name": "World Bank Open Data API",
+  "kind": "api",
+  "sectors": ["economy", "health", "society", "environment"],
+  "subsectors": ["development", "statistics"],
+  "data_types": ["tabular", "time_series", "cross_sectional", "panel"],
+  "geo_coverage": {
+    "scope": "global",
+    "levels": ["country", "region"],
+    "crs": "EPSG:4326"
+  },
+  "time_coverage": {
+    "start": "1960",
+    "end": "present"
+  },
+  "variables_offered": [],
+  "endpoints": [
+    {
+      "id": "indicators",
+      "path": "/api/v2/country/{country}/indicator/{indicator}",
+      "method": "GET",
+      "supports": {
+        "time": true,
+        "geo": true,
+        "pagination": true
+      }
+    }
+  ],
+  "license": {
+    "name": "CC BY 4.0",
+    "url": "https://data.worldbank.org/summary-terms-of-use",
+    "commercial_use": true,
+    "attribution_required": true
+  },
+  "authority": {
+    "level": 5,
+    "publisher": "World Bank"
+  },
+  "reliability": {
+    "uptime_score": 0.99,
+    "rate_limit_per_min": 100
+  }
+}
