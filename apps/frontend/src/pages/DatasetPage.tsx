@@ -149,10 +149,31 @@ export default function DatasetPage() {
     };
   }, []);
 
+  const { data: datasetDetail } = useQuery({
+    queryKey: ['datasetDetail', selectedDatasetId],
+    queryFn: async () => (await api.get(`/api/v1/datasets/${selectedDatasetId}`)).data,
+    enabled: !!selectedDatasetId && previewOpen,
+    refetchInterval: previewOpen ? 3000 : false,
+    refetchOnWindowFocus: true,
+  });
+
+  const detailStatus = String(datasetDetail?.status ?? '');
+  const isProcessingDetail = detailStatus === 'running' || detailStatus === 'draft';
+  const steps: Array<{ status: string }> = Array.isArray(datasetDetail?.steps) ? datasetDetail.steps : [];
+  const totalSteps = Math.max(steps.length, 1);
+  const completedSteps = steps.filter((s) => ['success', 'failed'].includes(String(s.status))).length;
+  const progressPct = Math.min(100, Math.round((completedSteps / totalSteps) * 100));
+
   const { data: previewData } = useQuery({
     queryKey: ['datasetPreview', selectedDatasetId],
     queryFn: async () => (await api.get(`/api/v1/datasets/${selectedDatasetId}/preview`)).data,
-    enabled: !!selectedDatasetId && previewOpen,
+    enabled: !!selectedDatasetId && previewOpen && !isProcessingDetail,
+    retry: (failureCount: number, err: any) => {
+      const status = err?.response?.status;
+      if (status === 409) return failureCount < 30; // keep trying while bundle is being produced
+      return false;
+    },
+    retryDelay: 2000,
   });
 
   const previewPercent = Number(previewData?.meta?.preview_percent ?? 15);
@@ -454,8 +475,17 @@ export default function DatasetPage() {
               <div>
                 <div className="text-xl font-semibold text-text-primary">Anteprima Dataset</div>
                 <div className="text-sm text-text-secondary mt-1">
-                  {canDownload ? 'Accesso completo abilitato' : `Accesso limitato: visualizzazione ${previewPercent}%`}
+                  {isProcessingDetail
+                    ? `Elaborazione in corso: ${progressPct}%`
+                    : canDownload
+                    ? 'Accesso completo abilitato'
+                    : `Accesso limitato: visualizzazione ${previewPercent}%`}
                 </div>
+                {isProcessingDetail && (
+                  <div className="mt-3 w-80 max-w-[60vw] h-2 bg-dark-secondary rounded-full overflow-hidden">
+                    <div className="h-2 bg-accent-blue" style={{ width: `${progressPct}%` }} />
+                  </div>
+                )}
               </div>
               <button
                 onClick={() => {
@@ -471,6 +501,14 @@ export default function DatasetPage() {
             <div className="flex-1 overflow-auto p-6">
               <div className="relative">
                 <div className="overflow-x-auto bg-dark-secondary/40 rounded-input border border-dark-secondary">
+                  {isProcessingDetail ? (
+                    <div className="py-16 text-center">
+                      <div className="text-sm font-semibold text-text-primary">Dataset in elaborazione</div>
+                      <div className="text-xs text-text-secondary mt-1">
+                        La preview sarà disponibile automaticamente appena il bundle sarà pronto.
+                      </div>
+                    </div>
+                  ) : (
                   <table className="w-full text-left text-sm">
                     <thead>
                       <tr className="text-text-secondary border-b border-dark-secondary">
@@ -517,6 +555,7 @@ export default function DatasetPage() {
                       )}
                     </tbody>
                   </table>
+                  )}
                 </div>
 
                 {watermark && (
