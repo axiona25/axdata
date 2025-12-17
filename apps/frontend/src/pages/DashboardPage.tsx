@@ -181,7 +181,7 @@ export default function DashboardPage() {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Top cards and hero */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
           <div 
@@ -429,7 +429,7 @@ export default function DashboardPage() {
             className="card xl:col-span-2 border"
             style={{ borderColor: '#007ed2', marginRight: '-85px', width: 'calc(100% + 85px)' }}
           >
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-semibold text-text-primary">Dataset Recenti</h3>
               </div>
@@ -439,24 +439,24 @@ export default function DashboardPage() {
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="text-text-secondary border-b border-dark-secondary">
-                    <th className="py-3">Codice DataSet</th>
-                    <th className="py-3">Nome DataSet</th>
-                    <th className="py-3">Data di creazione</th>
-                    <th className="py-3">Prezzo pagato</th>
-                    <th className="py-3">Stato</th>
-                    <th className="py-3">Dataset</th>
-                    <th className="py-3">Azioni</th>
+                    <th className="py-2">Codice DataSet</th>
+                    <th className="py-2">Nome DataSet</th>
+                    <th className="py-2">Data di creazione</th>
+                    <th className="py-2">Prezzo pagato</th>
+                    <th className="py-2">Stato</th>
+                    <th className="py-2">Dataset</th>
+                    <th className="py-2">Azioni</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dark-secondary">
                   {myDatasets.map((item) => (
                     <tr key={item.id} className="text-text-primary">
-                      <td className="py-3">{item.code}</td>
-                      <td className="py-3">{item.name}</td>
-                      <td className="py-3">{item.createdAt}</td>
-                      <td className="py-3">{item.price}</td>
-                      <td className="py-3">{getStatusPill(item.status)}</td>
-                      <td className="py-3">
+                      <td className="py-2">{item.code}</td>
+                      <td className="py-2">{item.name}</td>
+                      <td className="py-2">{item.createdAt}</td>
+                      <td className="py-2">{item.price}</td>
+                      <td className="py-2">{getStatusPill(item.status)}</td>
+                      <td className="py-2">
                         <button
                           className="p-2 rounded-input hover:bg-dark-secondary transition-colors"
                           title="Apri Dataset"
@@ -468,7 +468,7 @@ export default function DashboardPage() {
                           <Database className="w-5 h-5 text-accent-blue" />
                         </button>
                       </td>
-                      <td className="py-3">
+                      <td className="py-2">
                         <div className="relative">
                           <button
                             className="p-2 rounded-input hover:bg-dark-secondary transition-colors"
@@ -523,10 +523,10 @@ export default function DashboardPage() {
             className="card border ml-auto"
             style={{ borderColor: '#007ed2', width: 'calc(100% - 100px)' }}
           >
-              <div className="mb-4">
+              <div className="mb-2">
                 <h3 className="text-lg font-semibold text-text-primary">Riepilogo Categorie</h3>
               </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {sectors.map((item) => (
                 <div key={item.label}>
                   <div className="flex items-center justify-between text-sm text-text-secondary mb-1">
@@ -539,7 +539,7 @@ export default function DashboardPage() {
                       style={{ width: `${item.percent}%` }}
                     />
                   </div>
-                  <div className="text-xs text-text-secondary mt-1">{item.percent}%</div>
+                  <div className="text-xs text-text-secondary mt-0.5">{item.percent}%</div>
                 </div>
               ))}
             </div>
