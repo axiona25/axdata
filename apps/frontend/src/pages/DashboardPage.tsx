@@ -21,9 +21,11 @@ import {
   Settings,
   Euro,
   Package,
+  Wallet,
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import { authApi } from '../lib/auth';
+import { api } from '../lib/api';
 import { Link } from 'react-router-dom';
 
 export default function DashboardPage() {
@@ -44,6 +46,17 @@ export default function DashboardPage() {
     retry: false,
     enabled: !!localStorage.getItem('access_token'), // Only run if token exists
   });
+
+  const { data: walletSummary } = useQuery({
+    queryKey: ['walletSummary'],
+    queryFn: async () => (await api.get('/api/v1/wallet/summary')).data,
+    enabled: !!localStorage.getItem('access_token'),
+    retry: 1,
+    refetchOnWindowFocus: true,
+  });
+
+  const walletBalance = Number(walletSummary?.balance ?? 0);
+  const walletSpent = Number(walletSummary?.total_spent ?? 0);
 
   useEffect(() => {
     // TODO: replace with real API data
@@ -233,12 +246,12 @@ export default function DashboardPage() {
               }}
             >
               <div>
-                <div className="text-xl opacity-90 font-semibold -mt-2 mb-3">Totale Spesa</div>
-                <div className="text-3xl font-semibold">€ {stats.totalSpent.toLocaleString('it-IT')}</div>
-                <div className="text-xs opacity-80 mt-3">+{stats.spendingGrowth}% rispetto alla ricerca precedente</div>
+                <div className="text-xl opacity-90 font-semibold -mt-2 mb-3">Dataset Disponibili</div>
+                <div className="text-3xl font-semibold">{stats.purchasedDatasets - stats.completedDatasets}</div>
+                <div className="text-xs opacity-80 mt-3">N. Dataset Acquistati: {stats.purchasedDatasets}</div>
               </div>
               <div className="p-3 bg-white/10 rounded-full">
-                <Euro className="w-6 h-6" />
+                <Database className="w-6 h-6" />
               </div>
             </div>
           </div>
@@ -403,15 +416,15 @@ export default function DashboardPage() {
             }}
           >
             <div className="w-full">
-              <h3 className="text-lg font-semibold text-white mb-3">Dataset Disponibili</h3>
+              <h3 className="text-lg font-semibold text-white mb-3">Totale Spesa</h3>
             </div>
             <div className="flex flex-col items-center justify-center flex-1 w-full">
-              <Database className="w-12 h-12 opacity-80 mb-3" />
-              <div className="text-6xl font-bold">{stats.purchasedDatasets - stats.completedDatasets}</div>
+              <Wallet className="w-12 h-12 opacity-80 mb-3" />
+              <div className="text-5xl font-bold">€ {walletSpent.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
             </div>
             <div className="w-full flex items-center justify-between">
               <div className="text-base opacity-90 font-semibold">
-                N. Dataset Acquistati: {stats.purchasedDatasets}
+                Credito rimanente: € {walletBalance.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
               <div className="flex flex-col items-end gap-1">
                 <div className="px-3 py-1.5 bg-[#fa9f2a] rounded-full flex items-center gap-1.5">
