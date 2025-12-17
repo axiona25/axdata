@@ -99,6 +99,8 @@ def ensure_default_commercial_packages(db: Session) -> None:
     - 5 x €10
     - 10 x €8
     - 20 x €6
+    - 50 x €4.5
+    - 100 x €3
     """
     desired = [
         ("Acquisto N. 1 Dataset", 1, 15.0, PackageSize.SINGLE),
@@ -106,9 +108,12 @@ def ensure_default_commercial_packages(db: Session) -> None:
         ("Acquisto N. 5 Dataset", 5, 10.0, PackageSize.MEDIUM),
         ("Acquisto N. 10 Dataset", 10, 8.0, PackageSize.XL),
         ("Acquisto N. 20 Dataset", 20, 6.0, PackageSize.XXXL),
+        ("Acquisto N. 50 Dataset", 50, 4.5, PackageSize.MEGA),
+        ("Acquisto N. 100 Dataset", 100, 3.0, PackageSize.ULTRA),
     ]
 
-    existing = {p.dataset_count: p for p in db.query(DatasetPackage).all()}
+    all_pkgs = db.query(DatasetPackage).all()
+    existing = {p.dataset_count: p for p in all_pkgs}
     changed = False
 
     for name, count, unit_price, size in desired:
@@ -149,6 +154,17 @@ def ensure_default_commercial_packages(db: Session) -> None:
     if changed:
         db.commit()
         logger.info("✅ Ensured commercial packages catalog")
+
+    # Deactivate any other packages not part of the commercial catalog (avoid confusion in UI)
+    desired_counts = {c for _, c, _, _ in desired}
+    deactivate_changed = False
+    for pkg in all_pkgs:
+        if pkg.dataset_count not in desired_counts and pkg.is_active:
+            pkg.is_active = False
+            deactivate_changed = True
+    if deactivate_changed:
+        db.commit()
+        logger.info("✅ Deactivated non-commercial packages")
 
 
 def consume_package_credit(db: Session, user_package: UserPackage) -> None:

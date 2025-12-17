@@ -471,16 +471,32 @@ export default function DatasetPage() {
                           </td>
                         </tr>
                       ) : (
-                        previewRows.map((r, idx) => (
-                          <tr key={idx} className="text-text-primary">
-                            <td className="py-3 px-4">{idx + 1}</td>
-                            {previewColumns.map((c) => (
-                              <td key={c} className={`py-3 px-4 ${!canDownload ? 'blur-sm select-none' : ''}`}>
-                                {String(r?.[c] ?? '')}
-                              </td>
+                        <>
+                          {/* Real visible rows (already gated to 15% by backend when locked) */}
+                          {previewRows.map((r, idx) => (
+                            <tr key={`real-${idx}`} className="text-text-primary">
+                              <td className="py-3 px-4">{idx + 1}</td>
+                              {previewColumns.map((c) => (
+                                <td key={c} className="py-3 px-4">
+                                  {String(r?.[c] ?? '')}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+
+                          {/* Locked: add masked placeholder rows to show that content exists */}
+                          {!canDownload &&
+                            Array.from({ length: 12 }).map((_, i) => (
+                              <tr key={`masked-${i}`} className="text-text-primary">
+                                <td className="py-3 px-4 text-text-secondary">{previewRows.length + i + 1}</td>
+                                {previewColumns.map((c) => (
+                                  <td key={c} className="py-3 px-4">
+                                    <div className="h-3 w-full bg-dark-secondary rounded-full opacity-60" />
+                                  </td>
+                                ))}
+                              </tr>
                             ))}
-                          </tr>
-                        ))
+                        </>
                       )}
                     </tbody>
                   </table>
