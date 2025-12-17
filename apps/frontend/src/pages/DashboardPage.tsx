@@ -609,18 +609,18 @@ export default function DashboardPage() {
               <div className="mb-2">
                 <h3 className="text-lg font-semibold text-text-primary">Riepilogo Categorie</h3>
               </div>
-            <div className="space-y-2 flex-1 flex flex-col justify-start">
+            <div className="flex-1 flex flex-col justify-between gap-4">
               {categories.map((item) => (
-                <div key={item.label}>
-                  <div className="flex items-center justify-between text-sm text-text-secondary mb-1">
+                <div key={item.label} className="flex-1 min-h-0 flex flex-col justify-center">
+                  <div className="flex items-center justify-between text-sm text-text-secondary mb-2">
                     <span>
                       {item.label} <span className="text-text-secondary">({item.percent}%)</span>
                     </span>
                     <span>{item.value}</span>
                   </div>
-                  <div className="w-full bg-dark-secondary rounded-full h-2">
+                  <div className="w-full bg-dark-secondary rounded-full h-2.5">
                     <div
-                      className="h-2 rounded-full bg-accent-blue"
+                      className="h-2.5 rounded-full bg-accent-blue"
                       style={{ width: `${item.percent}%` }}
                     />
                   </div>
