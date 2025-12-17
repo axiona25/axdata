@@ -23,6 +23,7 @@ from workers.tasks import process_dataset_request
 from schemas.dataset_plan import DatasetPlan
 from schemas.ds_spec_schema import DatasetSpecCreate, DatasetSpecResponse
 from services.axdata_service import convert_dataset_plan_to_ds_spec, create_dataset_with_axdata_pipeline
+from db.models.payment import Payment, PaymentStatus
 
 logger = logging.getLogger(__name__)
 
@@ -41,21 +42,8 @@ async def create_dataset(
         chat_session_id = None
         if dataset_data.chat_session_id:
             chat_session_id = uuid.UUID(dataset_data.chat_session_id)
-        
-        # Check package eligibility before creating
-        from services.package_service import check_package_eligibility
-        can_create, user_package, message = check_package_eligibility(
-            db=db,
-            user_id=current_user.id,
-            domain=dataset_data.plan.domain.value
-        )
-        
-        if not can_create:
-            raise HTTPException(
-                status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail=message
-            )
-        
+
+        # Dataset creation is always allowed; credits (if any) will be consumed inside the service.
         dataset = create_dataset_request_from_plan(
             db=db,
             user_id=current_user.id,
@@ -165,6 +153,44 @@ async def list_datasets(
         )
         for d in datasets
     ]
+
+
+@router.get("/{dataset_id}/access")
+async def dataset_access(
+    dataset_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Access policy for a dataset.
+
+    - Dataset can always be created and processed.
+    - Full preview + download require a consumed credit (package) or a completed payment.
+    - Without payment/credit: preview is limited to 15% and should be watermarked.
+    """
+    dataset = db.query(DatasetRequest).filter(
+        DatasetRequest.id == uuid.UUID(dataset_id),
+        DatasetRequest.user_id == current_user.id
+    ).first()
+    if not dataset:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found")
+
+    has_completed_payment = db.query(Payment).filter(
+        Payment.dataset_request_id == dataset.id,
+        Payment.status == PaymentStatus.COMPLETED
+    ).first() is not None
+
+    is_unlocked = dataset.status == DatasetStatus.PAID or has_completed_payment
+
+    return {
+        "dataset_id": str(dataset.id),
+        "status": dataset.status.value,
+        "can_download": bool(is_unlocked),
+        "can_preview_full": bool(is_unlocked),
+        "preview_percent": 100 if is_unlocked else 15,
+        "watermark": False if is_unlocked else True,
+        "message": "OK" if is_unlocked else "Preview limited. Purchase a package to unlock full access."
+    }
 
 
 @router.get("/{dataset_id}", response_model=DatasetRequestDetailResponse)
@@ -490,26 +516,16 @@ async def create_dataset_from_ds_spec(
         # Validate and convert DS-SPEC
         ds_spec = ds_spec_data.to_ds_spec()
         
-        # Extract sector for package eligibility check
+        # Extract sector (used as domain label)
         sector = ds_spec.sector
-        
-        # Check package eligibility
-        from services.package_service import check_package_eligibility
-        can_create, user_package, message = check_package_eligibility(
-            db=db,
-            user_id=current_user.id,
-            domain=sector  # Use sector as domain
-        )
-        
-        if not can_create:
-            raise HTTPException(
-                status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail=message
-            )
-        
-        # Consume package credit
-        from services.package_service import consume_package_credit
-        consume_package_credit(db, user_package)
+
+        # Credits are optional. If available, consume one and attach the user_package_id; otherwise keep it gated.
+        from services.package_service import get_user_active_package, consume_package_credit
+        user_package = get_user_active_package(db, current_user.id)
+        if user_package and user_package.can_create_dataset():
+            consume_package_credit(db, user_package)
+        else:
+            user_package = None
         
         # Run AXDATA pipeline
         pipeline_result = create_dataset_with_axdata_pipeline(
@@ -531,7 +547,7 @@ async def create_dataset_from_ds_spec(
         dataset = DatasetRequest(
             user_id=current_user.id,
             chat_session_id=chat_session_id,
-            user_package_id=user_package.id,
+            user_package_id=user_package.id if user_package else None,
             title=ds_spec.request.query_text[:255],  # Truncate if needed
             domain=sector,
             plan_json=ds_spec.model_dump() if hasattr(ds_spec, 'model_dump') else ds_spec.dict() if hasattr(ds_spec, 'dict') else ds_spec,  # Store DS-SPEC as plan

@@ -23,6 +23,8 @@ from services.package_service import (
     get_user_active_package,
     check_package_eligibility
 )
+from services.wallet_service import debit_wallet, get_wallet_totals
+from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/packages", tags=["packages"])
@@ -123,19 +125,14 @@ async def select_package(
             detail="Package not found or not available"
         )
     
-    # Validate domains
-    if not selection.selected_domains:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="At least one domain must be selected"
-        )
+    # Domains are optional (packages are consumption-based). Default handled in service.
     
     # Create user package (without payment yet)
     user_package = create_user_package(
         db=db,
         user_id=current_user.id,
         package_id=package.id,
-        selected_domains=[d.value for d in selection.selected_domains],
+        selected_domains=[d.value for d in selection.selected_domains] if selection.selected_domains else ["all"],
         payment_id=None  # Will be set after payment
     )
     
@@ -199,4 +196,64 @@ async def check_eligibility(
         "can_create": can_create,
         "message": f"You have {user_package.remaining_datasets} dataset(s) remaining." if can_create else "Package exhausted or expired."
     }
+
+
+@router.post("/purchase", response_model=UserPackageResponse, status_code=status.HTTP_201_CREATED)
+async def purchase_package_with_wallet(
+    payload: UserPackageCreate,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Purchase a package using the virtual wallet balance.
+
+    Rules:
+    - User must have enough wallet balance to cover the full package price.
+    - Domain restrictions are ignored (consumption-based); defaults to ["all"].
+    """
+    package = db.query(DatasetPackage).filter(
+        DatasetPackage.id == payload.package_id,
+        DatasetPackage.is_active == True
+    ).first()
+    if not package:
+        raise HTTPException(status_code=404, detail="Package not found or not available")
+
+    # Ensure enough wallet balance
+    price = Decimal(str(package.price))
+    try:
+        debit_wallet(db, current_user.id, price, description=f"Purchase package: {package.name}")
+    except Exception as e:
+        balance, _, _ = get_wallet_totals(db, current_user.id)
+        raise HTTPException(status_code=402, detail=f"Insufficient wallet balance. Required € {price}, available € {balance}.")
+
+    user_package = create_user_package(
+        db=db,
+        user_id=current_user.id,
+        package_id=package.id,
+        selected_domains=[d.value for d in payload.selected_domains] if payload.selected_domains else ["all"],
+        payment_id=None,
+    )
+
+    return UserPackageResponse(
+        id=user_package.id,
+        user_id=user_package.user_id,
+        package=DatasetPackageResponse(
+            id=package.id,
+            name=package.name,
+            size=package.size,
+            dataset_count=package.dataset_count,
+            price=float(package.price),
+            currency=package.currency,
+            description=package.description,
+            is_active=package.is_active
+        ),
+        selected_domains=user_package.selected_domains,
+        total_datasets=user_package.total_datasets,
+        remaining_datasets=user_package.remaining_datasets,
+        used_datasets=user_package.used_datasets,
+        status=user_package.status,
+        purchased_at=user_package.purchased_at,
+        expires_at=user_package.expires_at,
+        activated_at=user_package.activated_at
+    )
 

@@ -29,10 +29,13 @@ def create_user_package(
     if not package:
         raise ValueError(f"Package {package_id} not found")
     
+    # Packages are consumption-based; domains are optional.
+    normalized_domains = selected_domains or ["all"]
+
     user_package = UserPackage(
         user_id=user_id,
         package_id=package_id,
-        selected_domains=selected_domains,
+        selected_domains=normalized_domains,
         total_datasets=package.dataset_count,
         remaining_datasets=package.dataset_count,
         used_datasets=0,
@@ -78,10 +81,74 @@ def check_package_eligibility(
     if not user_package.can_create_dataset():
         return False, user_package, "Package exhausted or expired."
     
-    if domain not in user_package.selected_domains:
-        return False, user_package, f"Domain '{domain}' not included in your package. Selected domains: {', '.join(user_package.selected_domains)}"
+    # Domain restriction removed: allow any domain if package has "all"
+    if user_package.selected_domains and "all" not in user_package.selected_domains:
+        if domain not in user_package.selected_domains:
+            return False, user_package, f"Domain '{domain}' not included in your package."
     
     return True, user_package, "OK"
+
+
+def ensure_default_commercial_packages(db: Session) -> None:
+    """
+    Ensure the commercial packages exist (idempotent).
+
+    Commercial catalog (unit promo price * dataset_count):
+    - 1 x €15
+    - 3 x €12
+    - 5 x €10
+    - 10 x €8
+    - 20 x €6
+    """
+    desired = [
+        ("Acquisto N. 1 Dataset", 1, 15.0, PackageSize.SINGLE),
+        ("Acquisto N. 3 Dataset", 3, 12.0, PackageSize.SMALL),
+        ("Acquisto N. 5 Dataset", 5, 10.0, PackageSize.MEDIUM),
+        ("Acquisto N. 10 Dataset", 10, 8.0, PackageSize.XL),
+        ("Acquisto N. 20 Dataset", 20, 6.0, PackageSize.XXXL),
+    ]
+
+    existing = {p.dataset_count: p for p in db.query(DatasetPackage).all()}
+    changed = False
+
+    for name, count, unit_price, size in desired:
+        total_price = round(unit_price * count, 2)
+        pkg = existing.get(count)
+        if not pkg:
+            db.add(DatasetPackage(
+                name=name,
+                size=size,
+                dataset_count=count,
+                price=total_price,
+                currency="EUR",
+                description=f"Promo € {unit_price} c.u. · Totale € {total_price}",
+                is_active=True,
+            ))
+            changed = True
+        else:
+            # Keep it aligned with commercial catalog
+            new_desc = f"Promo € {unit_price} c.u. · Totale € {total_price}"
+            if (
+                pkg.name != name or
+                int(pkg.dataset_count) != int(count) or
+                float(pkg.price) != float(total_price) or
+                pkg.currency != "EUR" or
+                pkg.size != size or
+                pkg.description != new_desc or
+                pkg.is_active is not True
+            ):
+                pkg.name = name
+                pkg.size = size
+                pkg.dataset_count = count
+                pkg.price = total_price
+                pkg.currency = "EUR"
+                pkg.description = new_desc
+                pkg.is_active = True
+                changed = True
+
+    if changed:
+        db.commit()
+        logger.info("✅ Ensured commercial packages catalog")
 
 
 def consume_package_credit(db: Session, user_package: UserPackage) -> None:

@@ -103,9 +103,10 @@ def process_axdata_dataset_request(self, dataset_id: str):
             "pipeline_result": pipeline_result,
             "bundle_path": bundle_path
         }
-        
-        # Update status to ready for payment
-        update_dataset_status(db, dataset.id, DatasetStatus.READY_FOR_PAYMENT)
+
+        # If dataset has a consumed credit (user_package_id set), mark as PAID; else keep gated.
+        final_status = DatasetStatus.PAID if dataset.user_package_id else DatasetStatus.READY_FOR_PAYMENT
+        update_dataset_status(db, dataset.id, final_status)
         
         logger.info(f"AXDATA pipeline completed for dataset {dataset_id}")
     

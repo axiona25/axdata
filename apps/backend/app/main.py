@@ -68,7 +68,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 
 # Import routers
-from api.routers import chat, datasets, billing, download, audit, packages, assets
+from api.routers import chat, datasets, billing, download, audit, packages, assets, wallet
 app.include_router(packages.router)
 app.include_router(chat.router)
 app.include_router(datasets.router)
@@ -76,6 +76,7 @@ app.include_router(billing.router)
 app.include_router(download.router)
 app.include_router(audit.router)
 app.include_router(assets.router)
+app.include_router(wallet.router)
 
 
 @app.get("/health")
@@ -129,6 +130,19 @@ async def startup_event():
             db.close()
     except Exception as e:
         logger.warning(f"⚠️ Could not seed AXDATA logo into DB: {e}")
+
+    # Seed commercial packages catalog (idempotent)
+    try:
+        from db.session import SessionLocal
+        from services.package_service import ensure_default_commercial_packages
+
+        db = SessionLocal()
+        try:
+            ensure_default_commercial_packages(db)
+        finally:
+            db.close()
+    except Exception as e:
+        logger.warning(f"⚠️ Could not seed commercial packages: {e}")
 
 
 @app.on_event("shutdown")

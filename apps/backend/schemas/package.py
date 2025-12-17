@@ -25,11 +25,11 @@ class DatasetPackageResponse(BaseModel):
 class PackageSelectionRequest(BaseModel):
     """Request to select a package and domains."""
     package_id: UUID = Field(..., description="Selected package ID")
-    selected_domains: List[Domain] = Field(
-        ...,
-        min_items=1,
-        max_items=10,
-        description="List of domains/categories for dataset creation"
+    # Domain restriction removed: packages are consumption-based.
+    # Kept for backward compatibility; if omitted we'll default to ["all"] server-side.
+    selected_domains: Optional[List[Domain]] = Field(
+        default=None,
+        description="Optional domains/categories. If omitted, package applies to all domains."
     )
 
 
@@ -54,7 +54,7 @@ class UserPackageResponse(BaseModel):
 class UserPackageCreate(BaseModel):
     """Create user package from package selection."""
     package_id: UUID
-    selected_domains: List[Domain]
+    selected_domains: Optional[List[Domain]] = None
     payment_id: Optional[UUID] = None  # If already paid
 
 

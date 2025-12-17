@@ -397,8 +397,10 @@ This dataset follows:
         
         update_step_status(db, step.id, StepStatus.SUCCESS, output_data)
         
-        # Update dataset status to ready_for_payment
-        update_dataset_status(db, step.dataset_request_id, DatasetStatus.READY_FOR_PAYMENT)
+        # If dataset has a consumed credit (user_package_id set), mark as PAID; else keep gated.
+        dataset = db.query(DatasetRequest).filter(DatasetRequest.id == step.dataset_request_id).first()
+        final_status = DatasetStatus.PAID if (dataset and dataset.user_package_id) else DatasetStatus.READY_FOR_PAYMENT
+        update_dataset_status(db, step.dataset_request_id, final_status)
         
         logger.info(f"Dataset {step.dataset_request_id} ready for payment")
     

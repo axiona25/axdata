@@ -7,6 +7,7 @@ from db.models.payment import Payment, PaymentStatus, PaymentProvider
 from db.models.invoice import Invoice, InvoiceStatus
 from db.models.audit_log import AuditLog, AuditAction
 from db.models.package import DatasetPackage, UserPackage
+from db.models.wallet import WalletTransaction, WalletTxType, WalletTxStatus
 
 __all__ = [
     "AppAsset",
@@ -16,6 +17,7 @@ __all__ = [
     "Payment", "PaymentStatus", "PaymentProvider",
     "Invoice", "InvoiceStatus",
     "AuditLog", "AuditAction",
-    "DatasetPackage", "UserPackage"
+    "DatasetPackage", "UserPackage",
+    "WalletTransaction", "WalletTxType", "WalletTxStatus"
 ]
 

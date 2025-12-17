@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from db.models.dataset import DatasetRequest, DatasetStep, DatasetStatus, StepStatus, StepType
 from schemas.dataset_plan import DatasetPlan
-from services.package_service import check_package_eligibility, consume_package_credit
+from services.package_service import get_user_active_package, consume_package_credit
 import uuid
 
 logger = logging.getLogger(__name__)
@@ -28,27 +28,23 @@ def create_dataset_request_from_plan(
     Returns:
         Created DatasetRequest
     
-    Raises:
-        ValueError: If user doesn't have active package or domain not allowed
+    Notes:
+        - Dataset creation is always allowed.
+        - If user has an active package with remaining credits, one credit is consumed and the dataset is marked as payable/unlocked.
+        - If user has no credits, the dataset will be gated (status will end in READY_FOR_PAYMENT).
     """
-    # Check package eligibility
-    can_create, user_package, message = check_package_eligibility(
-        db=db,
-        user_id=user_id,
-        domain=plan.domain.value
-    )
-    
-    if not can_create:
-        raise ValueError(message)
-    
-    # Consume package credit
-    consume_package_credit(db, user_package)
+    # Try to attach an active package (consumption-based, domains not enforced)
+    user_package = get_user_active_package(db, user_id)
+    if user_package and user_package.can_create_dataset():
+        consume_package_credit(db, user_package)
+    else:
+        user_package = None
     
     # Create dataset request
     dataset_request = DatasetRequest(
         user_id=user_id,
         chat_session_id=chat_session_id,
-        user_package_id=user_package.id,
+        user_package_id=user_package.id if user_package else None,
         title=plan.title,
         domain=plan.domain.value,
         plan_json=plan.dict(),
@@ -136,7 +132,7 @@ def update_dataset_status(
     # State machine transitions
     valid_transitions = {
         DatasetStatus.DRAFT: [DatasetStatus.RUNNING, DatasetStatus.FAILED],
-        DatasetStatus.RUNNING: [DatasetStatus.READY_FOR_PAYMENT, DatasetStatus.FAILED],
+        DatasetStatus.RUNNING: [DatasetStatus.READY_FOR_PAYMENT, DatasetStatus.PAID, DatasetStatus.FAILED],
         DatasetStatus.READY_FOR_PAYMENT: [DatasetStatus.PAID, DatasetStatus.FAILED],
         DatasetStatus.PAID: [DatasetStatus.DELIVERED, DatasetStatus.FAILED],
         DatasetStatus.DELIVERED: [],

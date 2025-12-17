@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   CreditCard,
   FileText,
@@ -9,8 +9,11 @@ import {
   User,
   MapPin,
   Hash,
+  Package,
+  Wallet,
 } from 'lucide-react';
 import Layout from '../components/Layout';
+import { api } from '../lib/api';
 
 type PaymentMethod = 'stripe' | 'paypal' | null;
 type PersonType = 'fisica' | 'giuridica';
@@ -34,7 +37,7 @@ interface Invoice {
 }
 
 export default function BillingPage() {
-  const [activeTab, setActiveTab] = useState<'payments' | 'invoices'>('payments');
+  const [activeTab, setActiveTab] = useState<'payments' | 'invoices' | 'plans'>('payments');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('stripe');
   const [isEditingPaymentMethod, setIsEditingPaymentMethod] = useState(false);
   const [personType, setPersonType] = useState<PersonType>('fisica');
@@ -42,6 +45,46 @@ export default function BillingPage() {
 
   // Mock data - metodo pagamento dalla registrazione
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('stripe');
+
+  // Portfolio virtuale (backend)
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [walletSpent, setWalletSpent] = useState<number>(0);
+  const [walletLoaded, setWalletLoaded] = useState<number>(0);
+
+  // Packages from backend (commercial catalog)
+  const [plans, setPlans] = useState<Array<{ id: string; name: string; datasets: number; totalPrice: number; unitPrice: number }>>([]);
+  const [plansError, setPlansError] = useState<string | null>(null);
+  const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Load wallet + packages
+    const load = async () => {
+      try {
+        const [walletRes, pkgsRes] = await Promise.all([
+          api.get('/api/v1/wallet/summary'),
+          api.get('/api/v1/packages'),
+        ]);
+
+        setWalletBalance(walletRes.data.balance ?? 0);
+        setWalletSpent(walletRes.data.total_spent ?? 0);
+        setWalletLoaded(walletRes.data.total_loaded ?? 0);
+
+        const pkgs = pkgsRes.data.packages ?? [];
+        const mapped = pkgs.map((p: any) => {
+          const totalPrice = Number(p.price ?? 0);
+          const datasets = Number(p.dataset_count ?? 0);
+          const unitPrice = datasets > 0 ? Number((totalPrice / datasets).toFixed(2)) : 0;
+          return { id: String(p.id), name: String(p.name), datasets, totalPrice, unitPrice };
+        });
+
+        setPlans(mapped);
+        setPlansError(null);
+      } catch (e: any) {
+        setPlansError(e?.message || 'Errore nel caricamento dei piani');
+      }
+    };
+    load();
+  }, []);
 
   // Mock data - coordinate fatturazione
   const [billingInfo, setBillingInfo] = useState({
@@ -193,6 +236,16 @@ export default function BillingPage() {
             }`}
           >
             Fatture
+          </button>
+          <button
+            onClick={() => setActiveTab('plans')}
+            className={`px-4 py-3 font-semibold transition-colors border-b-2 ${
+              activeTab === 'plans'
+                ? 'text-white border-accent-blue'
+                : 'text-text-secondary border-transparent hover:text-text-primary'
+            }`}
+          >
+            Gestione Piani
           </button>
         </div>
 
@@ -356,7 +409,7 @@ export default function BillingPage() {
               </div>
             </div>
           </div>
-        ) : (
+        ) : activeTab === 'invoices' ? (
           <div className="space-y-6">
             {/* Coordinate Fatturazione */}
             <div className="card border" style={{ borderColor: '#007ed2' }}>
@@ -645,6 +698,106 @@ export default function BillingPage() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Wallet summary */}
+            <div className="card border" style={{ borderColor: '#007ed2' }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Wallet className="w-5 h-5 text-accent-blue" />
+                  <div>
+                    <div className="text-sm font-semibold text-text-primary">Portfolio virtuale</div>
+                    <div className="text-xs text-text-secondary">
+                      Saldo disponibile: <span className="text-text-primary font-semibold">€ {walletBalance.toFixed(2)}</span> · Spesa complessiva: <span className="text-text-primary font-semibold">€ {walletSpent.toFixed(2)}</span> · Totale caricato: <span className="text-text-primary font-semibold">€ {walletLoaded.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-text-secondary">
+                  Il pacchetto può essere prenotato solo se il saldo copre l’importo totale.
+                </div>
+              </div>
+            </div>
+
+            {/* Plans grid */}
+            {plansError && (
+              <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-input">
+                <p className="text-sm text-red-400">{plansError}</p>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {plans.map((p) => {
+                const total = p.totalPrice;
+                const canBuy = walletBalance >= total;
+                return (
+                  <div key={p.id} className="card border" style={{ borderColor: '#007ed2' }}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-input bg-dark-secondary flex items-center justify-center">
+                          <Package className="w-5 h-5 text-accent-blue" />
+                        </div>
+                        <div>
+                          <div className="text-base font-semibold text-text-primary">{p.name}</div>
+                          <div className="text-xs text-text-secondary mt-1">
+                            Prezzo promo: <span className="text-text-primary font-semibold">€ {p.unitPrice}</span> c.u. · Totale: <span className="text-text-primary font-semibold">€ {total}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          canBuy ? 'bg-green-500/20 text-green-500' : 'bg-orange-500/20 text-orange-500'
+                        }`}
+                      >
+                        {canBuy ? 'Disponibile' : 'Saldo insufficiente'}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="text-xs text-text-secondary">
+                        Richiede saldo: <span className="text-text-primary font-semibold">€ {total.toFixed(2)}</span>
+                      </div>
+                      <button
+                        disabled={!canBuy || isPurchasing === p.id}
+                        className="px-4 py-2 bg-accent-blue text-white rounded-input hover:bg-accent-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={async () => {
+                          try {
+                            setIsPurchasing(p.id);
+                            await api.post('/api/v1/packages/purchase', {
+                              package_id: p.id,
+                              selected_domains: null,
+                              payment_id: null,
+                            });
+
+                            // Refresh wallet after purchase
+                            const walletRes = await api.get('/api/v1/wallet/summary');
+                            setWalletBalance(walletRes.data.balance ?? 0);
+                            setWalletSpent(walletRes.data.total_spent ?? 0);
+                            setWalletLoaded(walletRes.data.total_loaded ?? 0);
+                          } catch (e: any) {
+                            // eslint-disable-next-line no-alert
+                            alert(e?.response?.data?.detail || e?.message || 'Errore acquisto pacchetto');
+                          } finally {
+                            setIsPurchasing(null);
+                          }
+                        }}
+                      >
+                        {isPurchasing === p.id ? 'Acquisto...' : 'Acquista'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Rules */}
+            <div className="card border" style={{ borderColor: '#007ed2' }}>
+              <h3 className="text-lg font-semibold text-text-primary mb-2">Regole di accesso</h3>
+              <ul className="text-sm text-text-secondary space-y-1 list-disc list-inside">
+                <li>Puoi generare un dataset anche senza pacchetto.</li>
+                <li>Senza pacchetto/credito non puoi scaricarlo e l’anteprima sarà limitata (15%) e con filigrane.</li>
+                <li>Quando acquisti un pacchetto, il contatore crediti scala automaticamente fino a esaurimento.</li>
+              </ul>
             </div>
           </div>
         )}
