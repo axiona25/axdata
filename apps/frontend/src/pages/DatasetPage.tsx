@@ -158,7 +158,9 @@ export default function DatasetPage() {
   });
 
   const detailStatus = String(datasetDetail?.status ?? '');
-  const isProcessingDetail = detailStatus === 'running' || detailStatus === 'draft';
+  // If detail isn't loaded yet, behave conservatively: assume processing to avoid preview 409 spam.
+  const isProcessingDetail =
+    !datasetDetail || detailStatus === 'running' || detailStatus === 'draft';
   const steps: Array<{ status: string }> = Array.isArray(datasetDetail?.steps) ? datasetDetail.steps : [];
   const totalSteps = Math.max(steps.length, 1);
   const completedSteps = steps.filter((s) => ['success', 'failed'].includes(String(s.status))).length;
@@ -167,7 +169,7 @@ export default function DatasetPage() {
   const { data: previewData } = useQuery({
     queryKey: ['datasetPreview', selectedDatasetId],
     queryFn: async () => (await api.get(`/api/v1/datasets/${selectedDatasetId}/preview`)).data,
-    enabled: !!selectedDatasetId && previewOpen && !isProcessingDetail,
+    enabled: !!selectedDatasetId && previewOpen && !!datasetDetail && !isProcessingDetail,
     retry: (failureCount: number, err: any) => {
       const status = err?.response?.status;
       if (status === 409) return failureCount < 30; // keep trying while bundle is being produced
