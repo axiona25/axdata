@@ -49,9 +49,17 @@ export default function ConfirmStep({
       {error && (
         <div className="bg-red-500/20 border border-red-500/50 rounded-input p-4 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-          <div>
+          <div className="flex-1">
             <p className="text-sm font-medium text-red-500 mb-1">Errore</p>
-            <p className="text-sm text-red-400">{error}</p>
+            <p className="text-sm text-red-400 mb-3">{error}</p>
+            {(error.includes('package') || error.includes('Package') || error.includes('pacchetto') || error.includes('No active package')) && (
+              <a
+                href="/dashboard/packages"
+                className="inline-block px-4 py-2 bg-accent-blue text-white rounded-input text-sm font-medium hover:bg-accent-blue/90 transition-colors"
+              >
+                Acquista un Pacchetto
+              </a>
+            )}
           </div>
         </div>
       )}
@@ -67,31 +75,6 @@ export default function ConfirmStep({
             <li>Potrai visualizzarlo e scaricarlo dalla pagina Dataset</li>
           </ul>
         </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex justify-end gap-2 pt-4 border-t border-dark-secondary">
-        <button
-          onClick={onBack}
-          disabled={isCreating}
-          className="px-4 py-2 rounded-input bg-dark-secondary text-text-primary hover:bg-dark-secondary/80 transition-colors disabled:opacity-50"
-        >
-          Indietro
-        </button>
-        <button
-          onClick={onConfirm}
-          disabled={isCreating}
-          className="px-6 py-2 rounded-input bg-accent-blue text-white hover:bg-accent-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {isCreating ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Creazione...
-            </>
-          ) : (
-            'Crea Dataset'
-          )}
-        </button>
       </div>
     </div>
   );

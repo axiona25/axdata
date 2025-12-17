@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, RotateCcw, Edit2, Trash2, X } from 'lucide-react';
+import { Send, User, RotateCcw, Edit2, Trash2, X } from 'lucide-react';
 import type { DatasetPlan } from '../../types';
+import botAvatar from '../../assets/avatar-axdata.png';
 
 interface ChatStepProps {
   sessionId: string | null;
@@ -266,13 +267,18 @@ export default function ChatStep({
       >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <Bot className="w-12 h-12 text-accent-blue mb-4 opacity-50" />
+            <img
+              src={botAvatar}
+              alt="AXDATA"
+              className="w-12 h-12 mb-4 opacity-90 object-contain"
+              loading="eager"
+              decoding="async"
+            />
             <h3 className="text-lg font-semibold text-text-primary mb-2">
               Descrivi il dataset che vuoi creare
             </h3>
             <p className="text-text-secondary text-sm max-w-md">
-              Scrivi in linguaggio naturale cosa ti serve. L'AI interpreterà la tua richiesta 
-              e genererà automaticamente la configurazione del dataset.
+              Scrivi in linguaggio naturale cosa ti serve. AXDATA interpreterà la tua richiesta e genererà automaticamente la configurazione del dataset.
             </p>
             <div className="mt-6 space-y-2 text-left">
               <p className="text-text-secondary text-sm font-medium">Esempi:</p>
@@ -296,7 +302,13 @@ export default function ChatStep({
               >
                 {msg.role === 'assistant' && (
                   <div className="w-8 h-8 rounded-full bg-accent-blue/20 flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-4 h-4 text-accent-blue" />
+                    <img
+                      src={botAvatar}
+                      alt="AXDATA"
+                      className="w-5 h-5 object-contain"
+                      loading="eager"
+                      decoding="async"
+                    />
                   </div>
                 )}
                 <div className="flex flex-col gap-2 max-w-[80%]">
@@ -386,7 +398,13 @@ export default function ChatStep({
         {isStreaming && (
           <div className="flex gap-3 justify-start">
             <div className="w-8 h-8 rounded-full bg-accent-blue/20 flex items-center justify-center flex-shrink-0">
-              <Bot className="w-4 h-4 text-accent-blue" />
+              <img
+                src={botAvatar}
+                alt="AXDATA"
+                className="w-5 h-5 object-contain"
+                loading="eager"
+                decoding="async"
+              />
             </div>
             <div className="bg-dark-secondary rounded-lg px-4 py-3">
               <div className="flex gap-1">
@@ -430,8 +448,8 @@ export default function ChatStep({
         </div>
         <p className="text-xs text-text-secondary mt-2">
           {datasetPlanReady 
-            ? "L'AI ha generato il piano. Rispondi per confermare o continua la conversazione."
-            : "L'AI analizzerà la tua richiesta e ti spiegherà come costruirà il dataset"}
+            ? "Rispondi per confermare e continua la conversazione."
+            : "AXDATA analizzerà la tua richiesta e ti spiegherà come costruirà il dataset"}
         </p>
       </div>
     </div>

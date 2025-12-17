@@ -143,7 +143,7 @@ export default function DatasetWizard({ isOpen, onClose, onSuccess }: DatasetWiz
           <div>
             <h2 className="text-xl font-semibold text-text-primary">Crea Nuovo Dataset</h2>
             <p className="text-sm text-text-secondary mt-1">
-              Descrivi la tua richiesta e l'AI genererà il dataset per te
+              Descrivi la tua richiesta e AXDATA genererà il dataset per te
             </p>
           </div>
           <button

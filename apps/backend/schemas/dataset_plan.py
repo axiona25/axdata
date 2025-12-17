@@ -16,7 +16,7 @@ class Domain(str, Enum):
 class SourcePlan(BaseModel):
     """Source plan for data collection."""
     connector: str = Field(..., description="Connector name (e.g., 'worldbank', 'eurostat', 'pubmed')")
-    queries: List[Dict[str, Any]] = Field(..., description="List of queries for this connector")
+    queries: List[Dict[str, Any]] = Field(default_factory=list, description="List of queries for this connector. Can be empty if connector-specific parameters will be determined automatically.")
 
 
 class TransformationPlan(BaseModel):
@@ -77,19 +77,21 @@ DATASET_PLAN_TOOL_SCHEMA = {
                         "properties": {
                             "connector": {
                                 "type": "string",
-                                "description": "The connector name (e.g., 'worldbank', 'eurostat', 'pubmed')"
+                                "description": "The connector name (e.g., 'worldbank', 'eurostat', 'pubmed', 'istat')"
                             },
                             "queries": {
                                 "type": "array",
                                 "items": {
                                     "type": "object",
-                                    "description": "Query parameters specific to the connector"
-                                }
+                                    "description": "Query parameters specific to the connector. Can be empty if connector-specific parameters will be determined automatically."
+                                },
+                                "default": [],
+                                "description": "List of queries for this connector. Can be empty array [] if parameters will be determined automatically by the system."
                             }
                         },
-                        "required": ["connector", "queries"]
+                        "required": ["connector"]
                     },
-                    "description": "List of data sources to collect from"
+                    "description": "List of data sources to collect from. Each source must have a 'connector' field. The 'queries' field is optional and can be an empty array."
                 },
                 "transformations": {
                     "type": "array",

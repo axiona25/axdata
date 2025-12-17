@@ -146,27 +146,6 @@ export default function PreviewStep({ datasetPlan, onConfirm, onBack }: PreviewS
           </div>
         </div>
       </div>
-
-      {/* Actions */}
-      <div className="flex justify-end gap-2 pt-4 border-t border-dark-secondary">
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onBack();
-          }}
-          className="px-4 py-2 rounded-input bg-dark-secondary text-text-primary hover:bg-dark-secondary/80 transition-colors cursor-pointer"
-        >
-          Indietro
-        </button>
-        <button
-          onClick={onConfirm}
-          className="px-6 py-2 rounded-input bg-accent-blue text-white hover:bg-accent-blue/90 transition-colors flex items-center gap-2"
-        >
-          <CheckCircle className="w-4 h-4" />
-          Conferma e Continua
-        </button>
-      </div>
     </div>
   );
 }

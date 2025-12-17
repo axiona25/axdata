@@ -29,7 +29,21 @@ export function useCreateDataset(): UseCreateDatasetReturn {
       setIsCreating(false);
       return datasetId;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || err.message || 'Failed to create dataset';
+      let errorMessage = err.response?.data?.detail || err.message || 'Failed to create dataset';
+      
+      // Handle 402 Payment Required with user-friendly message
+      if (err.response?.status === 402) {
+        if (errorMessage.includes('No active package')) {
+          errorMessage = 'Nessun pacchetto attivo trovato. Per favore, acquista un pacchetto per creare dataset.';
+        } else if (errorMessage.includes('Package exhausted')) {
+          errorMessage = 'Il tuo pacchetto è esaurito. Per favore, acquista un nuovo pacchetto per continuare.';
+        } else if (errorMessage.includes('Domain')) {
+          errorMessage = `Dominio non incluso nel tuo pacchetto. ${errorMessage}`;
+        } else {
+          errorMessage = 'Pacchetto non valido o esaurito. Per favore, acquista un pacchetto per creare dataset.';
+        }
+      }
+      
       setError(errorMessage);
       setIsCreating(false);
       throw err;

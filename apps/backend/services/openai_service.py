@@ -80,6 +80,24 @@ YOUR JOB:
    * Transformations (handled automatically)
    * Documentation (generated automatically)
 
+6. **CRITICAL - DatasetPlan Format**:
+   When generating the DatasetPlan using create_dataset_plan tool, you MUST include:
+   - For each source in "sources", you MUST include BOTH:
+     * "connector": the connector name (e.g., "istat", "worldbank", "eurostat")
+     * "queries": an array of query objects (can be empty array [] if connector-specific parameters will be determined automatically)
+   
+   Example correct format:
+   {
+     "domain": "demography",
+     "title": "Popolazione per regione in Italia dal 2015",
+     "sources": [
+       {
+         "connector": "istat",
+         "queries": []  // Can be empty, but field MUST be present
+       }
+     ]
+   }
+
 EXAMPLE RESPONSE FORMAT:
 User: "Popolazione per regione in Italia dal 2015"
 
@@ -190,6 +208,24 @@ YOUR JOB:
    * Transformations (handled automatically)
    * Documentation (generated automatically)
 
+6. **CRITICAL - DatasetPlan Format**:
+   When generating the DatasetPlan using create_dataset_plan tool, you MUST include:
+   - For each source in "sources", you MUST include BOTH:
+     * "connector": the connector name (e.g., "istat", "worldbank", "eurostat")
+     * "queries": an array of query objects (can be empty array [] if connector-specific parameters will be determined automatically)
+   
+   Example correct format:
+   {
+     "domain": "demography",
+     "title": "Popolazione per regione in Italia dal 2015",
+     "sources": [
+       {
+         "connector": "istat",
+         "queries": []  // Can be empty, but field MUST be present
+       }
+     ]
+   }
+
 EXAMPLE RESPONSE FORMAT:
 User: "Popolazione per regione in Italia dal 2015"
 
@@ -232,11 +268,19 @@ Then generate the DatasetPlan."""
                     try:
                         # Parse function arguments
                         args = json.loads(tool_call.function.arguments)
+                        
+                        # Ensure queries field exists for each source (fix OpenAI sometimes omitting it)
+                        if "sources" in args:
+                            for source in args["sources"]:
+                                if "queries" not in source:
+                                    source["queries"] = []
+                        
                         # Validate with Pydantic
                         dataset_plan = DatasetPlan(**args)
                         logger.info(f"DatasetPlan generated for session {session_id}: {dataset_plan.title}")
                     except Exception as e:
                         logger.error(f"Error parsing DatasetPlan: {e}", exc_info=True)
+                        logger.error(f"Args received: {args if 'args' in locals() else 'N/A'}")
         
         return full_response, dataset_plan
     

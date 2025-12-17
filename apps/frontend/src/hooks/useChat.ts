@@ -25,14 +25,43 @@ export function useChat(): UseChatReturn {
 
   const createSession = useCallback(async (): Promise<string> => {
     try {
+      // Check if token exists
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        const errorMsg = 'Non autenticato. Effettua il login per continuare.';
+        setError(errorMsg);
+        // Redirect to login
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+        throw new Error(errorMsg);
+      }
+
       const response = await api.post('/api/v1/chat/sessions', {
         title: 'Nuovo Dataset'
       });
       const newSessionId = response.data.id;
       setSessionId(newSessionId);
+      setError(null); // Clear any previous errors
       return newSessionId;
     } catch (err: any) {
-      setError(err.message || 'Failed to create chat session');
+      console.error('Error creating chat session:', err);
+      
+      // Handle 401 specifically
+      if (err.response?.status === 401) {
+        const errorMsg = 'Sessione scaduta. Effettua il login per continuare.';
+        setError(errorMsg);
+        // Clear tokens and redirect to login
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+        throw new Error(errorMsg);
+      }
+      
+      const errorMsg = err.response?.data?.detail || err.message || 'Failed to create chat session';
+      setError(errorMsg);
       throw err;
     }
   }, []); // Empty deps - function is stable
