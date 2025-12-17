@@ -41,6 +41,8 @@ export default function DashboardPage() {
     queryFn: async () => (await api.get('/api/v1/datasets?limit=500')).data,
     enabled: !!localStorage.getItem('access_token'),
     refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: 5000,
   });
 
   const { data: walletSummary } = useQuery({

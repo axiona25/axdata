@@ -55,6 +55,9 @@ export default function DatasetPage() {
   const { data: datasetsApi } = useQuery({
     queryKey: ['datasetsList'],
     queryFn: async () => (await api.get('/api/v1/datasets?limit=500')).data,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: 5000,
   });
 
   const allDatasets: DatasetRow[] = Array.isArray(datasetsApi)
