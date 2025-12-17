@@ -144,6 +144,27 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"⚠️ Could not seed commercial packages: {e}")
 
+    # Seed wallet for test user (Raffaele Amoroso) - dev/testing only
+    try:
+        from db.session import SessionLocal
+        from db.models.user import User
+        from services.wallet_service import get_wallet_totals, credit_wallet
+        from decimal import Decimal
+
+        db = SessionLocal()
+        try:
+            test_user = db.query(User).filter(User.email == "r.amoroso80@gmail.com").first()
+            if test_user:
+                balance, total_loaded, total_spent = get_wallet_totals(db, test_user.id)
+                # Ensure starting state: total_loaded >= 1500 and total_spent == 0 for testing
+                if total_loaded == Decimal("0.00") and total_spent == Decimal("0.00"):
+                    credit_wallet(db, test_user.id, Decimal("1500.00"), description="Test top-up (dev): 1500 EUR")
+                    logger.info("✅ Seeded test wallet top-up for r.amoroso80@gmail.com (€1500)")
+        finally:
+            db.close()
+    except Exception as e:
+        logger.warning(f"⚠️ Could not seed test wallet for Raffaele Amoroso: {e}")
+
 
 @app.on_event("shutdown")
 async def shutdown_event():

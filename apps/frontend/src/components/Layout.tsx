@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import BrandLogo from './BrandLogo';
 import { authApi } from '../lib/auth';
+import { api } from '../lib/api';
 
 interface LayoutProps {
   children: ReactNode;
@@ -35,12 +36,6 @@ export default function Layout({ children, searchQuery, onSearchChange, headerTi
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const [notificationsCount, setNotificationsCount] = useState(0); // Mock: da sostituire con dati reali
   const [showWalletTooltip, setShowWalletTooltip] = useState(false);
-  
-  // Mock data per portfolio virtuale - da sostituire con dati reali dall'API
-  const [walletData, setWalletData] = useState({
-    totalLoaded: 1500.00, // € caricati in fase di ricarica
-    remaining: 850.00, // € rimanenti dopo acquisti
-  });
 
   // Fetch user profile and current user data
   const { data: userProfile } = useQuery({
@@ -59,6 +54,15 @@ export default function Layout({ children, searchQuery, onSearchChange, headerTi
     enabled: !!localStorage.getItem('access_token'),
     retry: false,
     refetchOnMount: true,
+  });
+
+  // Wallet summary (real from backend)
+  const { data: walletSummary } = useQuery({
+    queryKey: ['walletSummary'],
+    queryFn: async () => (await api.get('/api/v1/wallet/summary')).data,
+    enabled: !!localStorage.getItem('access_token'),
+    retry: 1,
+    refetchOnWindowFocus: true,
   });
 
   // Update date/time every second
@@ -261,20 +265,20 @@ export default function Layout({ children, searchQuery, onSearchChange, headerTi
                         <div className="flex justify-between">
                           <span className="text-text-secondary">Totale Caricato:</span>
                           <span className="text-text-primary font-semibold">
-                            € {walletData.totalLoaded.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            € {Number(walletSummary?.total_loaded ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-text-secondary">Rimanente:</span>
                           <span className="text-accent-blue font-semibold">
-                            € {walletData.remaining.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            € {Number(walletSummary?.balance ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                         </div>
                         <div className="pt-2 border-t border-dark-secondary">
                           <div className="flex justify-between">
                             <span className="text-text-secondary">Speso:</span>
                             <span className="text-text-primary">
-                              € {(walletData.totalLoaded - walletData.remaining).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              € {Number(walletSummary?.total_spent ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           </div>
                         </div>

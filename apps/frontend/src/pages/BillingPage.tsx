@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import { api } from '../lib/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 type PaymentMethod = 'stripe' | 'paypal' | null;
 type PersonType = 'fisica' | 'giuridica';
@@ -46,45 +47,54 @@ export default function BillingPage() {
   // Mock data - metodo pagamento dalla registrazione
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('stripe');
 
-  // Portfolio virtuale (backend)
-  const [walletBalance, setWalletBalance] = useState<number>(0);
-  const [walletSpent, setWalletSpent] = useState<number>(0);
-  const [walletLoaded, setWalletLoaded] = useState<number>(0);
+  const queryClient = useQueryClient();
 
-  // Packages from backend (commercial catalog)
-  const [plans, setPlans] = useState<Array<{ id: string; name: string; datasets: number; totalPrice: number; unitPrice: number }>>([]);
-  const [plansError, setPlansError] = useState<string | null>(null);
-  const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
+  // Wallet (shared with header)
+  const { data: walletSummary } = useQuery({
+    queryKey: ['walletSummary'],
+    queryFn: async () => (await api.get('/api/v1/wallet/summary')).data,
+  });
 
+  // Packages list
+  const { data: packagesData, isLoading: isLoadingPlans, error: plansErrorObj } = useQuery({
+    queryKey: ['packagesCatalog'],
+    queryFn: async () => (await api.get('/api/v1/packages')).data,
+  });
+
+  const plansError = (plansErrorObj as any)?.message || null;
+  const plans: Array<{ id: string; name: string; datasets: number; totalPrice: number; unitPrice: number }> = (packagesData?.packages ?? []).map((p: any) => {
+    const totalPrice = Number(p.price ?? 0);
+    const datasets = Number(p.dataset_count ?? 0);
+    const unitPrice = datasets > 0 ? Number((totalPrice / datasets).toFixed(2)) : 0;
+    return { id: String(p.id), name: String(p.name), datasets, totalPrice, unitPrice };
+  });
+
+  const walletBalance = Number(walletSummary?.balance ?? 0);
+  const walletSpent = Number(walletSummary?.total_spent ?? 0);
+  const walletLoaded = Number(walletSummary?.total_loaded ?? 0);
+
+  // Toast system (local)
+  const [toasts, setToasts] = useState<Array<{ id: string; title: string; message?: string }>>([]);
+  const pushToast = (title: string, message?: string) => {
+    const id = `${Date.now()}-${Math.random()}`;
+    setToasts((t) => [...t, { id, title, message }]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500);
+  };
+
+  // Fire toast when plans loaded
   useEffect(() => {
-    // Load wallet + packages
-    const load = async () => {
-      try {
-        const [walletRes, pkgsRes] = await Promise.all([
-          api.get('/api/v1/wallet/summary'),
-          api.get('/api/v1/packages'),
-        ]);
+    if (!isLoadingPlans && plans.length > 0) {
+      pushToast('Nuovi Piani commerciali disponibili', 'Puoi acquistare un pacchetto usando il portfolio virtuale.');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoadingPlans]);
 
-        setWalletBalance(walletRes.data.balance ?? 0);
-        setWalletSpent(walletRes.data.total_spent ?? 0);
-        setWalletLoaded(walletRes.data.total_loaded ?? 0);
-
-        const pkgs = pkgsRes.data.packages ?? [];
-        const mapped = pkgs.map((p: any) => {
-          const totalPrice = Number(p.price ?? 0);
-          const datasets = Number(p.dataset_count ?? 0);
-          const unitPrice = datasets > 0 ? Number((totalPrice / datasets).toFixed(2)) : 0;
-          return { id: String(p.id), name: String(p.name), datasets, totalPrice, unitPrice };
-        });
-
-        setPlans(mapped);
-        setPlansError(null);
-      } catch (e: any) {
-        setPlansError(e?.message || 'Errore nel caricamento dei piani');
-      }
-    };
-    load();
-  }, []);
+  // Modals
+  const [confirmPlan, setConfirmPlan] = useState<{ id: string; name: string; total: number } | null>(null);
+  const [topUpOpen, setTopUpOpen] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState<number>(1500);
+  const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
+  const [isTopUping, setIsTopUping] = useState(false);
 
   // Mock data - coordinate fatturazione
   const [billingInfo, setBillingInfo] = useState({
@@ -215,6 +225,18 @@ export default function BillingPage() {
   return (
     <Layout headerTitle="Pagamenti e Fatture" headerSubtitle="Gestisci i tuoi pagamenti e le fatture">
       <div className="space-y-6">
+        {/* Toasts */}
+        {toasts.length > 0 && (
+          <div className="fixed top-4 right-4 z-50 space-y-2">
+            {toasts.map((t) => (
+              <div key={t.id} className="bg-dark-secondary border border-dark-secondary rounded-input px-4 py-3 shadow-lg w-80">
+                <div className="text-sm font-semibold text-text-primary">{t.title}</div>
+                {t.message && <div className="text-xs text-text-secondary mt-1">{t.message}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex gap-4 border-b border-dark-secondary">
           <button
@@ -714,8 +736,16 @@ export default function BillingPage() {
                     </div>
                   </div>
                 </div>
-                <div className="text-xs text-text-secondary">
-                  Il pacchetto può essere prenotato solo se il saldo copre l’importo totale.
+                <div className="flex items-center gap-2">
+                  <div className="text-xs text-text-secondary hidden md:block">
+                    Il pacchetto può essere prenotato solo se il saldo copre l’importo totale.
+                  </div>
+                  <button
+                    onClick={() => setTopUpOpen(true)}
+                    className="px-4 py-2 bg-accent-blue text-white rounded-input hover:bg-accent-blue/90 transition-colors"
+                  >
+                    Ricarica portfolio
+                  </button>
                 </div>
               </div>
             </div>
@@ -760,27 +790,7 @@ export default function BillingPage() {
                       <button
                         disabled={!canBuy || isPurchasing === p.id}
                         className="px-4 py-2 bg-accent-blue text-white rounded-input hover:bg-accent-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={async () => {
-                          try {
-                            setIsPurchasing(p.id);
-                            await api.post('/api/v1/packages/purchase', {
-                              package_id: p.id,
-                              selected_domains: null,
-                              payment_id: null,
-                            });
-
-                            // Refresh wallet after purchase
-                            const walletRes = await api.get('/api/v1/wallet/summary');
-                            setWalletBalance(walletRes.data.balance ?? 0);
-                            setWalletSpent(walletRes.data.total_spent ?? 0);
-                            setWalletLoaded(walletRes.data.total_loaded ?? 0);
-                          } catch (e: any) {
-                            // eslint-disable-next-line no-alert
-                            alert(e?.response?.data?.detail || e?.message || 'Errore acquisto pacchetto');
-                          } finally {
-                            setIsPurchasing(null);
-                          }
-                        }}
+                        onClick={() => setConfirmPlan({ id: p.id, name: p.name, total })}
                       >
                         {isPurchasing === p.id ? 'Acquisto...' : 'Acquista'}
                       </button>
@@ -802,6 +812,128 @@ export default function BillingPage() {
           </div>
         )}
       </div>
+
+      {/* Confirm purchase modal */}
+      {confirmPlan && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-dark-card border border-dark-secondary rounded-lg w-full max-w-md p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-lg font-semibold text-text-primary">Conferma acquisto</div>
+                <div className="text-sm text-text-secondary mt-1">{confirmPlan.name}</div>
+              </div>
+              <button
+                onClick={() => setConfirmPlan(null)}
+                className="p-2 rounded-input hover:bg-dark-secondary transition-colors"
+              >
+                <X className="w-5 h-5 text-text-secondary" />
+              </button>
+            </div>
+
+            <div className="mt-4 bg-dark-secondary rounded-input p-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-text-secondary">Totale pacchetto</span>
+                <span className="text-text-primary font-semibold">€ {confirmPlan.total.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-secondary">Saldo disponibile</span>
+                <span className="text-text-primary font-semibold">€ {walletBalance.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div className="mt-5 flex gap-3 justify-end">
+              <button
+                onClick={() => setConfirmPlan(null)}
+                className="px-4 py-2 bg-dark-secondary text-text-primary rounded-input hover:bg-dark-secondary/80 transition-colors"
+              >
+                Annulla
+              </button>
+              <button
+                disabled={walletBalance < confirmPlan.total || isPurchasing === confirmPlan.id}
+                onClick={async () => {
+                  try {
+                    setIsPurchasing(confirmPlan.id);
+                    await api.post('/api/v1/packages/purchase', {
+                      package_id: confirmPlan.id,
+                      selected_domains: null,
+                      payment_id: null,
+                    });
+                    await queryClient.invalidateQueries({ queryKey: ['walletSummary'] });
+                    pushToast('Dataset Comprato con successo', 'Pacchetto acquistato e crediti attivati.');
+                    setConfirmPlan(null);
+                  } catch (e: any) {
+                    pushToast('Errore acquisto', e?.response?.data?.detail || e?.message || 'Errore acquisto pacchetto');
+                  } finally {
+                    setIsPurchasing(null);
+                  }
+                }}
+                className="px-4 py-2 bg-accent-blue text-white rounded-input hover:bg-accent-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Conferma acquisto
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Top-up modal */}
+      {topUpOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-dark-card border border-dark-secondary rounded-lg w-full max-w-md p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-lg font-semibold text-text-primary">Ricarica portfolio</div>
+                <div className="text-sm text-text-secondary mt-1">Per i test puoi caricare credito manualmente.</div>
+              </div>
+              <button
+                onClick={() => setTopUpOpen(false)}
+                className="p-2 rounded-input hover:bg-dark-secondary transition-colors"
+              >
+                <X className="w-5 h-5 text-text-secondary" />
+              </button>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-text-secondary mb-2">Importo (€)</label>
+              <input
+                type="number"
+                value={topUpAmount}
+                onChange={(e) => setTopUpAmount(Number(e.target.value))}
+                className="input-field"
+                min={1}
+              />
+            </div>
+
+            <div className="mt-5 flex gap-3 justify-end">
+              <button
+                onClick={() => setTopUpOpen(false)}
+                className="px-4 py-2 bg-dark-secondary text-text-primary rounded-input hover:bg-dark-secondary/80 transition-colors"
+              >
+                Annulla
+              </button>
+              <button
+                disabled={topUpAmount <= 0 || isTopUping}
+                onClick={async () => {
+                  try {
+                    setIsTopUping(true);
+                    await api.post('/api/v1/wallet/credit', { amount: topUpAmount, description: 'Test top-up (dev)' });
+                    await queryClient.invalidateQueries({ queryKey: ['walletSummary'] });
+                    pushToast('Ricarica portfolio effettuata', `Caricati € ${topUpAmount.toFixed(2)}`);
+                    setTopUpOpen(false);
+                  } catch (e: any) {
+                    pushToast('Errore ricarica', e?.response?.data?.detail || e?.message || 'Errore ricarica portfolio');
+                  } finally {
+                    setIsTopUping(false);
+                  }
+                }}
+                className="px-4 py-2 bg-accent-blue text-white rounded-input hover:bg-accent-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Conferma ricarica
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }
