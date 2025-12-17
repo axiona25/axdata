@@ -180,6 +180,14 @@ export default function DashboardPage() {
 
   const [planSlideIndex, setPlanSlideIndex] = useState(0);
 
+  // Prevent vertical scrolling on dashboard; keep cards fully visible
+  useEffect(() => {
+    document.body.style.overflowY = 'hidden';
+    return () => {
+      document.body.style.overflowY = 'auto';
+    };
+  }, []);
+
   useEffect(() => {
     if (planSlides.length <= 1) return;
     const t = window.setInterval(() => {
@@ -517,7 +525,7 @@ export default function DashboardPage() {
             </div>
 
             {totalCreated === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Database className="w-12 h-12 text-text-secondary/70 mb-3" />
                 <div className="text-sm font-semibold text-text-primary">Nessun dataset ancora</div>
                 <div className="text-xs text-text-secondary mt-1">
@@ -529,24 +537,24 @@ export default function DashboardPage() {
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="text-text-secondary border-b border-dark-secondary">
-                      <th className="py-2">Codice DataSet</th>
-                      <th className="py-2">Nome DataSet</th>
-                      <th className="py-2">Data di creazione</th>
-                      <th className="py-2">Prezzo pagato</th>
-                      <th className="py-2">Stato</th>
-                      <th className="py-2">Dataset</th>
-                      <th className="py-2">Azioni</th>
+                      <th className="py-1.5">Codice DataSet</th>
+                      <th className="py-1.5">Nome DataSet</th>
+                      <th className="py-1.5">Data di creazione</th>
+                      <th className="py-1.5">Prezzo pagato</th>
+                      <th className="py-1.5">Stato</th>
+                      <th className="py-1.5">Dataset</th>
+                      <th className="py-1.5">Azioni</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-secondary">
                     {recentDatasets.map((item: any, idx: number) => (
                       <tr key={item.id} className="text-text-primary">
-                        <td className="py-2">{item.code}</td>
-                        <td className="py-2">{item.name}</td>
-                        <td className="py-2">{item.createdAt}</td>
-                        <td className="py-2">{item.price}</td>
-                        <td className="py-2">{getStatusPill(item.status)}</td>
-                        <td className="py-2">
+                        <td className="py-1.5">{item.code}</td>
+                        <td className="py-1.5">{item.name}</td>
+                        <td className="py-1.5">{item.createdAt}</td>
+                        <td className="py-1.5">{item.price}</td>
+                        <td className="py-1.5">{getStatusPill(item.status)}</td>
+                        <td className="py-1.5">
                           <Link
                             to="/dashboard/datasets"
                             className="p-2 rounded-input hover:bg-dark-secondary transition-colors inline-flex"
@@ -555,7 +563,7 @@ export default function DashboardPage() {
                             <Database className="w-5 h-5 text-accent-blue" />
                           </Link>
                         </td>
-                        <td className="py-2">
+                        <td className="py-1.5">
                           <div className="relative">
                             <button
                               className="p-2 rounded-input hover:bg-dark-secondary transition-colors"
@@ -592,11 +600,13 @@ export default function DashboardPage() {
               <div className="mb-2">
                 <h3 className="text-lg font-semibold text-text-primary">Riepilogo Categorie</h3>
               </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {categories.map((item) => (
                 <div key={item.label}>
                   <div className="flex items-center justify-between text-sm text-text-secondary mb-1">
-                    <span>{item.label}</span>
+                    <span>
+                      {item.label} <span className="text-text-secondary">({item.percent}%)</span>
+                    </span>
                     <span>{item.value}</span>
                   </div>
                   <div className="w-full bg-dark-secondary rounded-full h-2">
@@ -605,7 +615,6 @@ export default function DashboardPage() {
                       style={{ width: `${item.percent}%` }}
                     />
                   </div>
-                  <div className="text-xs text-text-secondary mt-0.5">{item.percent}%</div>
                 </div>
               ))}
             </div>
