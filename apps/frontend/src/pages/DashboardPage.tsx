@@ -372,7 +372,7 @@ export default function DashboardPage() {
               </div>
             </div>
             {/* Chart */}
-            <div className="rounded-input bg-dark-secondary p-4 border border-dark-secondary relative overflow-hidden">
+            <div className="rounded-input bg-dark-secondary p-3 border border-dark-secondary relative overflow-hidden">
               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_#3B82F6_1px,_transparent_1px)] bg-[length:40px_40px]" />
               
               {/* Y-axis labels */}
@@ -383,7 +383,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Chart area */}
-              <div className="relative ml-6 h-48 flex items-end gap-3">
+              <div className="relative ml-6 h-40 flex items-end gap-3">
                 {academicYearData.map((data, idx) => {
                   const createdHeight = (data.created / maxValue) * 100;
                   const purchasedHeight = (data.purchased / maxValue) * 100;
@@ -525,7 +525,7 @@ export default function DashboardPage() {
             </div>
 
             {totalCreated === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="flex flex-col items-center justify-center py-10 text-center">
                 <Database className="w-12 h-12 text-text-secondary/70 mb-3" />
                 <div className="text-sm font-semibold text-text-primary">Nessun dataset ancora</div>
                 <div className="text-xs text-text-secondary mt-1">
@@ -537,24 +537,24 @@ export default function DashboardPage() {
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="text-text-secondary border-b border-dark-secondary">
-                      <th className="py-1.5">Codice DataSet</th>
-                      <th className="py-1.5">Nome DataSet</th>
-                      <th className="py-1.5">Data di creazione</th>
-                      <th className="py-1.5">Prezzo pagato</th>
-                      <th className="py-1.5">Stato</th>
-                      <th className="py-1.5">Dataset</th>
-                      <th className="py-1.5">Azioni</th>
+                      <th className="py-2">Codice DataSet</th>
+                      <th className="py-2">Nome DataSet</th>
+                      <th className="py-2">Data di creazione</th>
+                      <th className="py-2">Prezzo pagato</th>
+                      <th className="py-2">Stato</th>
+                      <th className="py-2">Dataset</th>
+                      <th className="py-2">Azioni</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-secondary">
                     {recentDatasets.map((item: any, idx: number) => (
                       <tr key={item.id} className="text-text-primary">
-                        <td className="py-1.5">{item.code}</td>
-                        <td className="py-1.5">{item.name}</td>
-                        <td className="py-1.5">{item.createdAt}</td>
-                        <td className="py-1.5">{item.price}</td>
-                        <td className="py-1.5">{getStatusPill(item.status)}</td>
-                        <td className="py-1.5">
+                        <td className="py-2">{item.code}</td>
+                        <td className="py-2">{item.name}</td>
+                        <td className="py-2">{item.createdAt}</td>
+                        <td className="py-2">{item.price}</td>
+                        <td className="py-2">{getStatusPill(item.status)}</td>
+                        <td className="py-2">
                           <Link
                             to="/dashboard/datasets"
                             className="p-2 rounded-input hover:bg-dark-secondary transition-colors inline-flex"
@@ -563,7 +563,7 @@ export default function DashboardPage() {
                             <Database className="w-5 h-5 text-accent-blue" />
                           </Link>
                         </td>
-                        <td className="py-1.5">
+                        <td className="py-2">
                           <div className="relative">
                             <button
                               className="p-2 rounded-input hover:bg-dark-secondary transition-colors"
