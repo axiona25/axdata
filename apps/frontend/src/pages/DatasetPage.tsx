@@ -257,6 +257,15 @@ export default function DatasetPage() {
 
         {/* Tabella Dataset */}
         <div className="card border" style={{ borderColor: '#007ed2' }}>
+          {!hasAnyDatasets ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <Database className="w-14 h-14 text-text-secondary/70 mb-4" />
+              <div className="text-base font-semibold text-text-primary">Nessun dataset ancora</div>
+              <div className="text-sm text-text-secondary mt-1 max-w-md">
+                Crea il tuo primo dataset cliccando <span className="text-text-primary font-semibold">“Nuovo”</span>.
+              </div>
+            </div>
+          ) : (
           <div className="overflow-x-auto overflow-y-visible">
             <table className="w-full text-left text-sm">
               <thead>
@@ -358,7 +367,7 @@ export default function DatasetPage() {
                   <>
                     <tr className="border-b border-dark-secondary">
                       <td colSpan={7} className="py-3 text-center text-text-secondary">
-                        {hasAnyDatasets ? 'Nessun dataset trovato' : 'Nessun dataset ancora — clicca “Nuovo” per crearne uno'}
+                        Nessun dataset trovato
                       </td>
                     </tr>
                     {Array.from({ length: minRows - 1 }).map((_, index) => (
@@ -377,8 +386,10 @@ export default function DatasetPage() {
               </tbody>
             </table>
           </div>
+          )}
 
           {/* Footer con paginazione */}
+          {hasAnyDatasets && (
           <div className="border-t border-dark-secondary px-4 py-4 flex items-center justify-between">
             <div className="text-sm text-text-secondary">
               Mostrando {displayStart} - {displayEnd} di {filteredDatasets.length} dataset
@@ -417,6 +428,7 @@ export default function DatasetPage() {
               </button>
             </div>
           </div>
+          )}
         </div>
       </div>
       

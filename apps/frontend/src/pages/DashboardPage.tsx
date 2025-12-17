@@ -191,7 +191,11 @@ export default function DashboardPage() {
   const activePlanSlide = planSlides[planSlideIndex] ?? planSlides[0];
 
   const categories = useMemo(() => {
+    const DEFAULT_CATEGORIES = ['Economy', 'Health', 'Demography', 'Environment', 'Physics', 'Math'];
     const total = totalCreated || 0;
+    if (total === 0) {
+      return DEFAULT_CATEGORIES.map((label) => ({ label, value: '0', percent: 0 }));
+    }
     const counts = new Map<string, number>();
     for (const d of allDatasets as any[]) {
       const key = String(d.domain || 'general')
@@ -512,73 +516,73 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="text-text-secondary border-b border-dark-secondary">
-                    <th className="py-2">Codice DataSet</th>
-                    <th className="py-2">Nome DataSet</th>
-                    <th className="py-2">Data di creazione</th>
-                    <th className="py-2">Prezzo pagato</th>
-                    <th className="py-2">Stato</th>
-                    <th className="py-2">Dataset</th>
-                    <th className="py-2">Azioni</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-dark-secondary">
-                  {(recentDatasets.length > 0
-                    ? recentDatasets
-                    : Array.from({ length: 6 }).map((_, i) => ({
-                        id: `placeholder-${i}`,
-                        code: '-',
-                        name: 'Nessun dataset ancora',
-                        createdAt: '-',
-                        price: '-',
-                        status: 'processing' as const,
-                      }))
-                  ).map((item: any, idx: number) => (
-                    <tr key={item.id} className="text-text-primary">
-                      <td className="py-2">{item.code}</td>
-                      <td className="py-2">{item.name}</td>
-                      <td className="py-2">{item.createdAt}</td>
-                      <td className="py-2">{item.price}</td>
-                      <td className="py-2">{recentDatasets.length > 0 ? getStatusPill(item.status) : '-'}</td>
-                      <td className="py-2">
-                        <Link
-                          to="/dashboard/datasets"
-                          className="p-2 rounded-input hover:bg-dark-secondary transition-colors inline-flex"
-                          title="Vai ai Dataset"
-                        >
-                          <Database className="w-5 h-5 text-accent-blue" />
-                        </Link>
-                      </td>
-                      <td className="py-2">
-                        <div className="relative">
-                          <button
-                            className="p-2 rounded-input hover:bg-dark-secondary transition-colors"
-                            onClick={() => setActionMenuOpen(actionMenuOpen === idx ? null : idx)}
-                          >
-                            <MoreVertical className="w-5 h-5 text-text-secondary" />
-                          </button>
-                          {actionMenuOpen === idx && (
-                            <div className="absolute right-0 mt-2 w-48 bg-dark-card border border-dark-secondary rounded-input shadow-lg z-10">
-                              <Link
-                                to="/dashboard/datasets"
-                                className="w-full px-4 py-2 text-left text-sm text-text-primary hover:bg-dark-secondary flex items-center gap-2"
-                                onClick={() => setActionMenuOpen(null)}
-                              >
-                                <ExternalLink className="w-4 h-4" />
-                                Vai ai Dataset
-                              </Link>
-                            </div>
-                          )}
-                        </div>
-                      </td>
+            {totalCreated === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Database className="w-12 h-12 text-text-secondary/70 mb-3" />
+                <div className="text-sm font-semibold text-text-primary">Nessun dataset ancora</div>
+                <div className="text-xs text-text-secondary mt-1">
+                  Crea il tuo primo dataset e lo vedrai comparire qui automaticamente.
+                </div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="text-text-secondary border-b border-dark-secondary">
+                      <th className="py-2">Codice DataSet</th>
+                      <th className="py-2">Nome DataSet</th>
+                      <th className="py-2">Data di creazione</th>
+                      <th className="py-2">Prezzo pagato</th>
+                      <th className="py-2">Stato</th>
+                      <th className="py-2">Dataset</th>
+                      <th className="py-2">Azioni</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-dark-secondary">
+                    {recentDatasets.map((item: any, idx: number) => (
+                      <tr key={item.id} className="text-text-primary">
+                        <td className="py-2">{item.code}</td>
+                        <td className="py-2">{item.name}</td>
+                        <td className="py-2">{item.createdAt}</td>
+                        <td className="py-2">{item.price}</td>
+                        <td className="py-2">{getStatusPill(item.status)}</td>
+                        <td className="py-2">
+                          <Link
+                            to="/dashboard/datasets"
+                            className="p-2 rounded-input hover:bg-dark-secondary transition-colors inline-flex"
+                            title="Vai ai Dataset"
+                          >
+                            <Database className="w-5 h-5 text-accent-blue" />
+                          </Link>
+                        </td>
+                        <td className="py-2">
+                          <div className="relative">
+                            <button
+                              className="p-2 rounded-input hover:bg-dark-secondary transition-colors"
+                              onClick={() => setActionMenuOpen(actionMenuOpen === idx ? null : idx)}
+                            >
+                              <MoreVertical className="w-5 h-5 text-text-secondary" />
+                            </button>
+                            {actionMenuOpen === idx && (
+                              <div className="absolute right-0 mt-2 w-48 bg-dark-card border border-dark-secondary rounded-input shadow-lg z-10">
+                                <Link
+                                  to="/dashboard/datasets"
+                                  className="w-full px-4 py-2 text-left text-sm text-text-primary hover:bg-dark-secondary flex items-center gap-2"
+                                  onClick={() => setActionMenuOpen(null)}
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                  Vai ai Dataset
+                                </Link>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           <div 
