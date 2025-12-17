@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Database,
   Download,
@@ -11,180 +12,61 @@ import {
   Plus,
   Clock,
   CheckCircle,
+  X,
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import DatasetWizard from '../components/DatasetWizard';
+import { api } from '../lib/api';
 
 export default function DatasetPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [actionMenuOpen, setActionMenuOpen] = useState<number | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null);
   const itemsPerPage = 12;
 
-  // Dati mock estesi (simulando più dataset)
-  const allDatasets = [
-    {
-      id: 1,
-      code: 'DS-ECON-2024-001',
-      name: 'GDP Growth Rates - European Union (2010-2024)',
-      createdAt: '15/03/2024',
-      price: '€ 450.00',
-      status: 'paid',
-    },
-    {
-      id: 2,
-      code: 'DS-ECON-2024-002',
-      name: 'Inflation Data - OECD Countries',
-      createdAt: '22/03/2024',
-      price: '€ 320.00',
-      status: 'paid',
-    },
-    {
-      id: 3,
-      code: 'DS-ECON-2024-003',
-      name: 'Unemployment Statistics - Eurozone',
-      createdAt: '05/04/2024',
-      price: '€ 280.00',
-      status: 'processing',
-    },
-    {
-      id: 4,
-      code: 'DS-ECON-2024-004',
-      name: 'Trade Balance - G7 Nations',
-      createdAt: '18/04/2024',
-      price: '€ 510.00',
-      status: 'to_pay',
-    },
-    {
-      id: 5,
-      code: 'DS-ECON-2024-005',
-      name: 'Central Bank Interest Rates - Global',
-      createdAt: '28/04/2024',
-      price: '€ 380.00',
-      status: 'paid',
-    },
-    {
-      id: 6,
-      code: 'DS-BIO-2024-001',
-      name: 'Clinical Trial Data - Phase III Studies',
-      createdAt: '10/01/2024',
-      price: '€ 620.00',
-      status: 'paid',
-    },
-    {
-      id: 7,
-      code: 'DS-BIO-2024-002',
-      name: 'Genomic Sequencing - Cancer Research',
-      createdAt: '25/01/2024',
-      price: '€ 890.00',
-      status: 'paid',
-    },
-    {
-      id: 8,
-      code: 'DS-PHYS-2024-001',
-      name: 'Particle Physics Experiments - CERN Data',
-      createdAt: '12/02/2024',
-      price: '€ 750.00',
-      status: 'processing',
-    },
-    {
-      id: 9,
-      code: 'DS-MATH-2024-001',
-      name: 'Statistical Models - Machine Learning',
-      createdAt: '08/03/2024',
-      price: '€ 420.00',
-      status: 'paid',
-    },
-    {
-      id: 10,
-      code: 'DS-ECON-2024-006',
-      name: 'Market Volatility Index - Global Markets',
-      createdAt: '30/04/2024',
-      price: '€ 550.00',
-      status: 'to_pay',
-    },
-    {
-      id: 11,
-      code: 'DS-DEMO-2024-001',
-      name: 'Population Census Data - European Countries',
-      createdAt: '15/05/2024',
-      price: '€ 340.00',
-      status: 'paid',
-    },
-    {
-      id: 12,
-      code: 'DS-ECON-2024-007',
-      name: 'Consumer Price Index - Monthly Trends',
-      createdAt: '20/05/2024',
-      price: '€ 290.00',
-      status: 'paid',
-    },
-    {
-      id: 13,
-      code: 'DS-BIO-2024-003',
-      name: 'Drug Efficacy Studies - Pharmaceutical',
-      createdAt: '05/06/2024',
-      price: '€ 680.00',
-      status: 'processing',
-    },
-    {
-      id: 14,
-      code: 'DS-PHYS-2024-002',
-      name: 'Quantum Computing Experiments',
-      createdAt: '18/06/2024',
-      price: '€ 920.00',
-      status: 'to_pay',
-    },
-    {
-      id: 15,
-      code: 'DS-MATH-2024-002',
-      name: 'Cryptographic Algorithms Analysis',
-      createdAt: '25/06/2024',
-      price: '€ 480.00',
-      status: 'paid',
-    },
-    {
-      id: 16,
-      code: 'DS-ECON-2024-008',
-      name: 'Labor Market Statistics - Employment Rates',
-      createdAt: '02/07/2024',
-      price: '€ 360.00',
-      status: 'paid',
-    },
-    {
-      id: 17,
-      code: 'DS-BIO-2024-004',
-      name: 'Epidemiological Data - Disease Outbreaks',
-      createdAt: '10/07/2024',
-      price: '€ 540.00',
-      status: 'processing',
-    },
-    {
-      id: 18,
-      code: 'DS-PHYS-2024-003',
-      name: 'Astrophysics Observations - Telescope Data',
-      createdAt: '22/07/2024',
-      price: '€ 710.00',
-      status: 'paid',
-    },
-    {
-      id: 19,
-      code: 'DS-ECON-2024-009',
-      name: 'Financial Markets - Stock Exchange Data',
-      createdAt: '01/08/2024',
-      price: '€ 580.00',
-      status: 'to_pay',
-    },
-    {
-      id: 20,
-      code: 'DS-MATH-2024-003',
-      name: 'Numerical Analysis - Computational Methods',
-      createdAt: '15/08/2024',
-      price: '€ 410.00',
-      status: 'paid',
-    },
-  ];
+  const queryClient = useQueryClient();
+
+  type DatasetRow = {
+    id: string;
+    code: string;
+    name: string;
+    createdAt: string;
+    price: string;
+    status: 'paid' | 'to_pay' | 'processing';
+  };
+
+  const mapStatus = (s: string): DatasetRow['status'] => {
+    if (s === 'paid' || s === 'delivered') return 'paid';
+    if (s === 'ready_for_payment') return 'to_pay';
+    if (s === 'running' || s === 'draft') return 'processing';
+    return 'processing';
+  };
+
+  const formatDate = (iso: string | null | undefined) => {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('it-IT');
+  };
+
+  const { data: datasetsApi } = useQuery({
+    queryKey: ['datasetsList'],
+    queryFn: async () => (await api.get('/api/v1/datasets?limit=500')).data,
+  });
+
+  const allDatasets: DatasetRow[] = Array.isArray(datasetsApi)
+    ? datasetsApi.map((d: any) => ({
+        id: String(d.id),
+        code: String(d.id).slice(0, 8).toUpperCase(),
+        name: String(d.title || 'Dataset'),
+        createdAt: formatDate(d.created_at),
+        price: '-', // Prezzo per dataset non ancora esposto: gestito da pacchetti
+        status: mapStatus(String(d.status)),
+      }))
+    : [];
 
   const getStatusPill = (status: string) => {
     switch (status) {
@@ -261,6 +143,41 @@ export default function DatasetPage() {
       document.body.style.overflowY = 'auto';
     };
   }, []);
+
+  const { data: accessPolicy } = useQuery({
+    queryKey: ['datasetAccess', selectedDatasetId],
+    queryFn: async () => (await api.get(`/api/v1/datasets/${selectedDatasetId}/access`)).data,
+    enabled: !!selectedDatasetId && previewOpen,
+  });
+
+  const previewPercent = Number(accessPolicy?.preview_percent ?? 15);
+  const watermark = Boolean(accessPolicy?.watermark ?? true);
+  const canDownload = Boolean(accessPolicy?.can_download ?? false);
+
+  const sampleRows = useMemo(() => {
+    const total = 40;
+    const visible = Math.max(1, Math.round((previewPercent / 100) * total));
+    return Array.from({ length: total }).map((_, i) => ({
+      idx: i + 1,
+      valueA: `Valore_${i + 1}`,
+      valueB: `Metric_${(i + 1) * 3}`,
+      visible: i < visible,
+    }));
+  }, [previewPercent]);
+
+  const handleDownload = async (datasetId: string) => {
+    try {
+      const res = await api.get(`/api/v1/download/datasets/${datasetId}`);
+      const url = res.data?.signed_url;
+      if (url) {
+        window.open(url, '_blank');
+      }
+    } catch (e: any) {
+      // If locked, redirect user to plans page
+      const msg = e?.response?.data?.detail || e?.message || 'Download non disponibile';
+      alert(msg);
+    }
+  };
 
   return (
     <Layout 
@@ -370,7 +287,8 @@ export default function DatasetPage() {
                             className="p-2 rounded-input hover:bg-dark-secondary transition-colors"
                             title="Apri Dataset"
                             onClick={() => {
-                              console.log('Open dataset:', item.code);
+                              setSelectedDatasetId(item.id);
+                              setPreviewOpen(true);
                             }}
                           >
                             <Database className="w-5 h-5 text-accent-blue" />
@@ -413,7 +331,7 @@ export default function DatasetPage() {
                                 <button
                                   className="w-full px-4 py-2 text-left text-sm text-text-primary hover:bg-dark-secondary flex items-center gap-2"
                                   onClick={() => {
-                                    console.log('Scarica:', item.code);
+                                    handleDownload(item.id);
                                     setActionMenuOpen(null);
                                   }}
                                 >
@@ -511,9 +429,94 @@ export default function DatasetPage() {
         onSuccess={(datasetId) => {
           console.log('Dataset created:', datasetId);
           setWizardOpen(false);
-          // TODO: Refresh dataset list or navigate to detail page
+          queryClient.invalidateQueries({ queryKey: ['datasetsList'] });
         }}
       />
+
+      {/* Preview modal with watermark + 15% gating */}
+      {previewOpen && selectedDatasetId && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-dark-card border border-dark-secondary rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-dark-secondary">
+              <div>
+                <div className="text-xl font-semibold text-text-primary">Anteprima Dataset</div>
+                <div className="text-sm text-text-secondary mt-1">
+                  {canDownload ? 'Accesso completo abilitato' : `Accesso limitato: visualizzazione ${previewPercent}%`}
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setPreviewOpen(false);
+                  setSelectedDatasetId(null);
+                }}
+                className="p-2 rounded-input hover:bg-dark-secondary transition-colors"
+              >
+                <X className="w-5 h-5 text-text-secondary" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto p-6">
+              <div className="relative">
+                <div className="overflow-x-auto bg-dark-secondary/40 rounded-input border border-dark-secondary">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="text-text-secondary border-b border-dark-secondary">
+                        <th className="py-3 px-4">#</th>
+                        <th className="py-3 px-4">Campo A</th>
+                        <th className="py-3 px-4">Campo B</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-dark-secondary">
+                      {sampleRows.map((r) => (
+                        <tr key={r.idx} className="text-text-primary">
+                          <td className="py-3 px-4">{r.idx}</td>
+                          <td className={`py-3 px-4 ${r.visible ? '' : 'blur-sm select-none'}`}>{r.valueA}</td>
+                          <td className={`py-3 px-4 ${r.visible ? '' : 'blur-sm select-none'}`}>{r.valueB}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {watermark && (
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <div className="rotate-[-20deg] text-white/10 text-6xl font-black tracking-widest select-none">
+                      AXDATA · PREVIEW
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {!canDownload && (
+                <div className="mt-4 p-4 bg-orange-500/10 border border-orange-500/50 rounded-input">
+                  <div className="text-sm text-orange-400">
+                    Per vedere e scaricare il dataset completo, acquista un pacchetto in “Pagamenti e Fatture → Gestione Piani”.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-dark-secondary">
+              {!canDownload && (
+                <button
+                  onClick={() => (window.location.href = '/dashboard/billing')}
+                  className="px-4 py-2 bg-dark-secondary text-text-primary rounded-input hover:bg-dark-secondary/80 transition-colors"
+                >
+                  Vai ai Piani
+                </button>
+              )}
+              <button
+                onClick={() => handleDownload(selectedDatasetId)}
+                disabled={!canDownload}
+                className="px-4 py-2 bg-accent-blue text-white rounded-input hover:bg-accent-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Scarica
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }
