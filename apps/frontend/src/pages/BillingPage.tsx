@@ -756,10 +756,14 @@ export default function BillingPage() {
                 <p className="text-sm text-red-400">{plansError}</p>
               </div>
             )}
+            <div className="text-xs text-text-secondary">
+              Il prezzo c.u. è calcolato come <span className="text-text-primary font-semibold">Totale / N. Dataset</span>.
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {plans.map((p) => {
                 const total = p.totalPrice;
                 const canBuy = walletBalance >= total;
+                const isNew = p.datasets === 50 || p.datasets === 100;
                 return (
                   <div key={p.id} className="card border" style={{ borderColor: '#007ed2' }}>
                     <div className="flex items-start justify-between gap-3">
@@ -768,7 +772,14 @@ export default function BillingPage() {
                           <Package className="w-5 h-5 text-accent-blue" />
                         </div>
                         <div>
-                          <div className="text-base font-semibold text-text-primary">{p.name}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-base font-semibold text-text-primary">{p.name}</div>
+                            {isNew && (
+                              <span className="px-2 py-0.5 rounded-full bg-accent-orange/20 text-accent-orange text-xs font-semibold">
+                                Nuovo
+                              </span>
+                            )}
+                          </div>
                           <div className="text-xs text-text-secondary mt-1">
                             Prezzo promo: <span className="text-text-primary font-semibold">€ {p.unitPrice}</span> c.u. · Totale: <span className="text-text-primary font-semibold">€ {total}</span>
                           </div>

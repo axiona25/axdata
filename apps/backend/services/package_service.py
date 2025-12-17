@@ -12,9 +12,14 @@ logger = logging.getLogger(__name__)
 
 def get_available_packages(db: Session) -> List[DatasetPackage]:
     """Get all active packages."""
-    return db.query(DatasetPackage).filter(
-        DatasetPackage.is_active == True
+    # Only expose commercial packages (Acquisto N. X Dataset) to the UI.
+    # This prevents legacy bundles (e.g., Enterprise/Department/Ultra) from appearing.
+    commercial_counts = {1, 3, 5, 10, 20, 50, 100}
+    packages = db.query(DatasetPackage).filter(
+        DatasetPackage.is_active == True,
+        DatasetPackage.dataset_count.in_(commercial_counts)
     ).order_by(DatasetPackage.dataset_count.asc()).all()
+    return packages
 
 
 def create_user_package(
