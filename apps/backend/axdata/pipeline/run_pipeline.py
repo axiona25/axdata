@@ -50,31 +50,171 @@ def fetch_from_source(source: Dict[str, Any], ds_spec: Dict[str, Any], collector
     # Build intelligent query from DS-SPEC
     query = build_query_from_ds_spec(ds_spec, source_id, source)
     
+    def _direct_fetch() -> Dict[str, Any]:
+        """
+        Directly call public APIs (no collector service required).
+        Only a subset of sources are supported here.
+        """
+        # Lightweight, in-process caches
+        if not hasattr(fetch_from_source, "_cache"):
+            setattr(fetch_from_source, "_cache", {})
+        cache: Dict[str, Any] = getattr(fetch_from_source, "_cache")
+
+        def _safe_year(y: Any) -> Optional[int]:
+            try:
+                if y is None:
+                    return None
+                return int(str(y)[:4])
+            except Exception:
+                return None
+
+        start_year = _safe_year(query.get("filters", {}).get("startTime"))
+        end_year = _safe_year(query.get("filters", {}).get("endTime"))
+        geo = query.get("filters", {}).get("geo")
+
+        with httpx.Client(timeout=60.0, follow_redirects=True, headers={"User-Agent": "AXDATA/1.0"}) as client:
+            # World Bank Open Data (no key required)
+            if source_id == "worldbank":
+                indicator = query.get("indicator") or query.get("dataset_code") or "SP.POP.TOTL"
+                country = "all"
+                if isinstance(geo, str) and geo.lower() not in ["global", "all"]:
+                    country = geo.lower()
+                elif isinstance(geo, list) and len(geo) == 1:
+                    country = str(geo[0]).lower()
+                date = None
+                if start_year and end_year:
+                    date = f"{start_year}:{end_year}"
+                elif start_year:
+                    date = f"{start_year}:{start_year}"
+                params = {"format": "json", "per_page": 20000}
+                if date:
+                    params["date"] = date
+                url = f"https://api.worldbank.org/v2/country/{country}/indicator/{indicator}"
+                r = client.get(url, params=params)
+                r.raise_for_status()
+                data = r.json()
+                rows = data[1] if isinstance(data, list) and len(data) > 1 else []
+                # Normalize to simple records
+                records = []
+                for it in rows or []:
+                    records.append(
+                        {
+                            "country": (it.get("country") or {}).get("value"),
+                            "country_code": (it.get("country") or {}).get("id"),
+                            "indicator": (it.get("indicator") or {}).get("id"),
+                            "indicator_name": (it.get("indicator") or {}).get("value"),
+                            "year": it.get("date"),
+                            "value": it.get("value"),
+                        }
+                    )
+                return {
+                    "records": records,
+                    "meta": {"source": "worldbank", "indicator": indicator, "country": country},
+                }
+
+            # UN Population Data Portal (no key required for basic endpoints)
+            if source_id == "un_population":
+                # Resolve indicator id for "population" once
+                indicator_cache_key = "unpop_indicator_population"
+                if indicator_cache_key not in cache:
+                    ind_url = "https://population.un.org/dataportalapi/api/v1/indicators"
+                    ind = client.get(ind_url, params={"format": "json"})
+                    ind.raise_for_status()
+                    ind_json = ind.json()
+                    ind_list = ind_json.get("data") or ind_json.get("Data") or ind_json.get("results") or []
+                    chosen = None
+                    for row in ind_list:
+                        name = str(row.get("name") or row.get("Name") or "").lower()
+                        if "population" in name and ("total" in name or "total population" in name):
+                            chosen = row
+                            break
+                    if not chosen:
+                        for row in ind_list:
+                            name = str(row.get("name") or row.get("Name") or "").lower()
+                            if "population" in name:
+                                chosen = row
+                                break
+                    indicator_id = int(chosen.get("id") or chosen.get("Id") or 47) if chosen else 47
+                    cache[indicator_cache_key] = indicator_id
+
+                # Resolve location id for geo (Italy default)
+                loc_name = "Italy"
+                if isinstance(geo, str) and geo:
+                    loc_name = geo
+                loc_cache_key = f"unpop_loc_{loc_name.lower()}"
+                if loc_cache_key not in cache:
+                    loc_url = "https://population.un.org/dataportalapi/api/v1/locations"
+                    loc = client.get(loc_url, params={"format": "json"})
+                    loc.raise_for_status()
+                    loc_json = loc.json()
+                    loc_list = loc_json.get("data") or loc_json.get("Data") or loc_json.get("results") or []
+                    chosen_loc = None
+                    for row in loc_list:
+                        name = str(row.get("name") or row.get("Name") or "").lower()
+                        if name == loc_name.lower():
+                            chosen_loc = row
+                            break
+                    if not chosen_loc:
+                        for row in loc_list:
+                            name = str(row.get("name") or row.get("Name") or "").lower()
+                            if loc_name.lower() in name:
+                                chosen_loc = row
+                                break
+                    location_id = int(chosen_loc.get("id") or chosen_loc.get("Id") or 380) if chosen_loc else 380
+                    cache[loc_cache_key] = location_id
+
+                indicator_id = cache[indicator_cache_key]
+                location_id = cache[loc_cache_key]
+                s = start_year or 2015
+                e = end_year or s
+                data_url = f"https://population.un.org/dataportalapi/api/v1/data/indicators/{indicator_id}/locations/{location_id}/start/{s}/end/{e}"
+                r = client.get(data_url, params={"format": "json"})
+                r.raise_for_status()
+                js = r.json()
+                rows = js.get("data") or js.get("Data") or js.get("results") or []
+                records = []
+                for it in rows:
+                    records.append(it)
+                return {
+                    "records": records,
+                    "meta": {"source": "un_population", "indicator_id": indicator_id, "location_id": location_id},
+                }
+
+            raise ValueError(f"Direct fetch not implemented for source '{source_id}'")
+
     try:
-        with httpx.Client(timeout=300.0) as client:
+        # Preferred path: collector microservice (when running)
+        with httpx.Client(timeout=30.0) as client:
             response = client.post(
                 f"{collector_url}/collect",
-                json={
-                    "connector_name": source_id,
-                    "query": query,
-                    "dataset_step_id": None
-                }
+                json={"connector_name": source_id, "query": query, "dataset_step_id": None},
             )
             response.raise_for_status()
             result = response.json()
-            
             return {
                 "source_id": source_id,
                 "fetched_at": now_iso(),
                 "payload": {
-                    "records": result.get("metadata", {}).get("row_count", 0),
                     "data": result.get("metadata", {}),
-                    "records": result.get("metadata", {}).get("records", [])  # Actual records if available
+                    "records": result.get("metadata", {}).get("records", []),
                 },
                 "query": query,
                 "storage_path": result.get("storage_path"),
-                "provenance": result.get("provenance", {})
+                "provenance": result.get("provenance", {}),
             }
+    except httpx.RequestError as e:
+        # Collector not available -> fallback to direct public API calls
+        logger.warning(f"Collector unreachable ({collector_url}): {e}. Falling back to direct fetch for {source_id}.")
+        direct = _direct_fetch()
+        recs = direct.get("records", [])
+        return {
+            "source_id": source_id,
+            "fetched_at": now_iso(),
+            "payload": {"data": direct.get("meta", {}), "records": recs},
+            "query": query,
+            "storage_path": None,
+            "provenance": {"mode": "direct", "source": source_id},
+        }
     except CircuitBreakerOpenError as e:
         logger.error(f"Circuit breaker open for {source_id}: {e}")
         # Return error but don't fail completely (partial recovery)
