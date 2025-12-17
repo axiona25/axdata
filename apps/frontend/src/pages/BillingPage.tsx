@@ -127,7 +127,7 @@ export default function BillingPage() {
   // Modals
   const [confirmPlan, setConfirmPlan] = useState<{ id: string; name: string; total: number } | null>(null);
   const [topUpOpen, setTopUpOpen] = useState(false);
-  const [topUpAmount, setTopUpAmount] = useState<number>(1500);
+  const [topUpAmount, setTopUpAmount] = useState<number>(0);
   const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
   const [isTopUping, setIsTopUping] = useState(false);
 

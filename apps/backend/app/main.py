@@ -157,10 +157,11 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"⚠️ Could not seed commercial packages: {e}")
 
-    # Seed wallet for test user (Raffaele Amoroso) - dev/testing only
+    # Seed/reset wallet for test user (Raffaele Amoroso) - dev/testing only
     try:
         from db.session import SessionLocal
         from db.models.user import User
+        from db.models.wallet import WalletTransaction
         from services.wallet_service import get_wallet_totals, credit_wallet
         from decimal import Decimal
 
@@ -169,10 +170,13 @@ async def startup_event():
             test_user = db.query(User).filter(User.email == "r.amoroso80@gmail.com").first()
             if test_user:
                 balance, total_loaded, total_spent = get_wallet_totals(db, test_user.id)
-                # Ensure starting state: total_loaded >= 1500 and total_spent == 0 for testing
-                if total_loaded == Decimal("0.00") and total_spent == Decimal("0.00"):
-                    credit_wallet(db, test_user.id, Decimal("1500.00"), description="Test top-up (dev): 1500 EUR")
-                    logger.info("✅ Seeded test wallet top-up for r.amoroso80@gmail.com (€1500)")
+                # Ensure deterministic test state: exactly €100 loaded, €0 spent
+                desired_loaded = Decimal("100.00")
+                if total_loaded != desired_loaded or total_spent != Decimal("0.00"):
+                    db.query(WalletTransaction).filter(WalletTransaction.user_id == test_user.id).delete()
+                    db.commit()
+                    credit_wallet(db, test_user.id, desired_loaded, description="Test top-up (dev): 100 EUR")
+                    logger.info("✅ Reset test wallet for r.amoroso80@gmail.com (loaded €100, spent €0)")
         finally:
             db.close()
     except Exception as e:
