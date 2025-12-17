@@ -131,6 +131,8 @@ export default function DatasetPage() {
   const totalProcessing = allDatasets.filter(d => d.status === 'processing').length;
   const totalPaid = allDatasets.filter(d => d.status === 'paid').length;
 
+  const hasAnyDatasets = allDatasets.length > 0;
+
   // Reset alla prima pagina quando cambia la ricerca
   useEffect(() => {
     setCurrentPage(1);
@@ -356,7 +358,7 @@ export default function DatasetPage() {
                   <>
                     <tr className="border-b border-dark-secondary">
                       <td colSpan={7} className="py-3 text-center text-text-secondary">
-                        Nessun dataset trovato
+                        {hasAnyDatasets ? 'Nessun dataset trovato' : 'Nessun dataset ancora — clicca “Nuovo” per crearne uno'}
                       </td>
                     </tr>
                     {Array.from({ length: minRows - 1 }).map((_, index) => (

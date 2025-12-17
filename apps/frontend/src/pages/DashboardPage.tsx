@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   MessageSquare,
@@ -29,22 +29,18 @@ import { api } from '../lib/api';
 import { Link } from 'react-router-dom';
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState({
-    totalDatasets: 12,
-    activeRequests: 3,
-    completedDatasets: 9,
-    totalSpent: 89750,
-    availableDatasets: 135,
-    growth: 12.7,
-    purchasedDatasets: 47,
-    spendingGrowth: 8.5, // Percentuale di crescita rispetto alla ricerca precedente
-  });
-
   const { data: userData } = useQuery({
     queryKey: ['user'],
     queryFn: authApi.getCurrentUser,
     retry: false,
     enabled: !!localStorage.getItem('access_token'), // Only run if token exists
+  });
+
+  const { data: datasetsApi } = useQuery({
+    queryKey: ['datasetsList'],
+    queryFn: async () => (await api.get('/api/v1/datasets?limit=500')).data,
+    enabled: !!localStorage.getItem('access_token'),
+    refetchOnWindowFocus: true,
   });
 
   const { data: walletSummary } = useQuery({
@@ -55,27 +51,47 @@ export default function DashboardPage() {
     refetchOnWindowFocus: true,
   });
 
+  const mapStatus = (s: string): 'paid' | 'to_pay' | 'processing' => {
+    if (s === 'paid' || s === 'delivered') return 'paid';
+    if (s === 'ready_for_payment') return 'to_pay';
+    if (s === 'running' || s === 'draft') return 'processing';
+    return 'processing';
+  };
+
+  const formatDate = (iso: string | null | undefined) => {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return String(iso);
+    return d.toLocaleDateString('it-IT');
+  };
+
+  const allDatasets = useMemo(() => {
+    if (!Array.isArray(datasetsApi)) return [];
+    return datasetsApi
+      .map((d: any) => ({
+        id: String(d.id),
+        code: String(d.id).slice(0, 8).toUpperCase(),
+        name: String(d.title || 'Dataset'),
+        createdAt: formatDate(d.created_at),
+        createdAtISO: d.created_at ? String(d.created_at) : null,
+        price: '-', // prezzo per dataset non esposto lato API
+        status: mapStatus(String(d.status)),
+      }))
+      .sort((a, b) => {
+        const ta = a.createdAtISO ? new Date(a.createdAtISO).getTime() : 0;
+        const tb = b.createdAtISO ? new Date(b.createdAtISO).getTime() : 0;
+        return tb - ta;
+      });
+  }, [datasetsApi]);
+
+  const recentDatasets = useMemo(() => allDatasets.slice(0, 6), [allDatasets]);
+
+  const totalCreated = allDatasets.length;
+  const totalPaid = allDatasets.filter((d) => d.status === 'paid').length;
+  const totalCompleted = allDatasets.filter((d) => d.status === 'paid' || d.status === 'to_pay').length;
+
   const walletBalance = Number(walletSummary?.balance ?? 0);
   const walletSpent = Number(walletSummary?.total_spent ?? 0);
-
-  useEffect(() => {
-    // TODO: replace with real API data
-  }, []);
-
-  const statCards = [
-    {
-      title: 'Earnings this month',
-      value: '$31.868',
-      sub: '+2.5%',
-      icon: TrendingUp,
-    },
-    {
-      title: 'Earnings this month',
-      value: '$31.868',
-      sub: '+2.5%',
-      icon: TrendingUp,
-    },
-  ];
 
   const [actionMenuOpen, setActionMenuOpen] = useState<number | null>(null);
   const [hoveredMonth, setHoveredMonth] = useState<number | null>(null);
@@ -98,48 +114,7 @@ export default function DashboardPage() {
     ...academicYearData.map(d => Math.max(d.created, d.purchased))
   );
 
-  const myDatasets = [
-    {
-      id: 1,
-      code: 'DS-ECON-2024-001',
-      name: 'GDP Growth Rates - European Union (2010-2024)',
-      createdAt: '15/03/2024',
-      price: '€ 450.00',
-      status: 'paid',
-    },
-    {
-      id: 2,
-      code: 'DS-ECON-2024-002',
-      name: 'Inflation Data - OECD Countries',
-      createdAt: '22/03/2024',
-      price: '€ 320.00',
-      status: 'paid',
-    },
-    {
-      id: 3,
-      code: 'DS-ECON-2024-003',
-      name: 'Unemployment Statistics - Eurozone',
-      createdAt: '05/04/2024',
-      price: '€ 280.00',
-      status: 'processing',
-    },
-    {
-      id: 4,
-      code: 'DS-ECON-2024-004',
-      name: 'Trade Balance - G7 Nations',
-      createdAt: '18/04/2024',
-      price: '€ 510.00',
-      status: 'to_pay',
-    },
-    {
-      id: 5,
-      code: 'DS-ECON-2024-005',
-      name: 'Central Bank Interest Rates - Global',
-      createdAt: '28/04/2024',
-      price: '€ 380.00',
-      status: 'paid',
-    },
-  ];
+  const growth = 0;
 
   const sectors = [
     { label: 'Economics', value: '245', percent: 35.2 },
@@ -211,8 +186,8 @@ export default function DashboardPage() {
             >
               <div>
                 <div className="text-xl opacity-90 font-semibold -mt-2 mb-3">Dataset Acquistati</div>
-                <div className="text-3xl font-semibold">{stats.purchasedDatasets}</div>
-                <div className="text-xs opacity-80 mt-3">Ultimo acquisto: 15/03/2024</div>
+                <div className="text-3xl font-semibold">{totalPaid}</div>
+                <div className="text-xs opacity-80 mt-3">Ultimo dataset: {recentDatasets[0]?.createdAt ?? '-'}</div>
               </div>
               <div className="p-3 bg-white/10 rounded-full">
                 <CreditCard className="w-6 h-6" />
@@ -229,8 +204,8 @@ export default function DashboardPage() {
             >
               <div>
                 <div className="text-xl opacity-90 font-semibold -mt-2 mb-3">Dataset Elaborati</div>
-                <div className="text-3xl font-semibold">{stats.completedDatasets}</div>
-                <div className="text-xs opacity-80 mt-3">Ultima elaborazione: 20/03/2024</div>
+                <div className="text-3xl font-semibold">{totalCompleted}</div>
+                <div className="text-xs opacity-80 mt-3">Dataset creati: {totalCreated}</div>
               </div>
               <div className="p-3 bg-white/10 rounded-full">
                 <Settings className="w-6 h-6" />
@@ -247,8 +222,8 @@ export default function DashboardPage() {
             >
               <div>
                 <div className="text-xl opacity-90 font-semibold -mt-2 mb-3">Dataset Disponibili</div>
-                <div className="text-3xl font-semibold">{stats.purchasedDatasets - stats.completedDatasets}</div>
-                <div className="text-xs opacity-80 mt-3">N. Dataset Acquistati: {stats.purchasedDatasets}</div>
+                <div className="text-3xl font-semibold">{totalCompleted}</div>
+                <div className="text-xs opacity-80 mt-3">Dataset creati: {totalCreated}</div>
               </div>
               <div className="p-3 bg-white/10 rounded-full">
                 <Database className="w-6 h-6" />
@@ -429,7 +404,7 @@ export default function DashboardPage() {
               <div className="flex flex-col items-end gap-1">
                 <div className="px-3 py-1.5 bg-[#fa9f2a] rounded-full flex items-center gap-1.5">
                   <TrendingUp className="w-4 h-4" />
-                  <span className="text-sm font-semibold">{stats.growth}%</span>
+                  <span className="text-sm font-semibold">{growth}%</span>
                 </div>
               </div>
             </div>
@@ -462,65 +437,50 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dark-secondary">
-                  {myDatasets.map((item) => (
+                  {(recentDatasets.length > 0
+                    ? recentDatasets
+                    : Array.from({ length: 6 }).map((_, i) => ({
+                        id: `placeholder-${i}`,
+                        code: '-',
+                        name: 'Nessun dataset ancora',
+                        createdAt: '-',
+                        price: '-',
+                        status: 'processing' as const,
+                      }))
+                  ).map((item: any, idx: number) => (
                     <tr key={item.id} className="text-text-primary">
                       <td className="py-2">{item.code}</td>
                       <td className="py-2">{item.name}</td>
                       <td className="py-2">{item.createdAt}</td>
                       <td className="py-2">{item.price}</td>
-                      <td className="py-2">{getStatusPill(item.status)}</td>
+                      <td className="py-2">{recentDatasets.length > 0 ? getStatusPill(item.status) : '-'}</td>
                       <td className="py-2">
-                        <button
-                          className="p-2 rounded-input hover:bg-dark-secondary transition-colors"
-                          title="Apri Dataset"
-                          onClick={() => {
-                            // TODO: Implement dataset opening
-                            console.log('Open dataset:', item.code);
-                          }}
+                        <Link
+                          to="/dashboard/datasets"
+                          className="p-2 rounded-input hover:bg-dark-secondary transition-colors inline-flex"
+                          title="Vai ai Dataset"
                         >
                           <Database className="w-5 h-5 text-accent-blue" />
-                        </button>
+                        </Link>
                       </td>
                       <td className="py-2">
                         <div className="relative">
                           <button
                             className="p-2 rounded-input hover:bg-dark-secondary transition-colors"
-                            onClick={() => setActionMenuOpen(actionMenuOpen === item.id ? null : item.id)}
+                            onClick={() => setActionMenuOpen(actionMenuOpen === idx ? null : idx)}
                           >
                             <MoreVertical className="w-5 h-5 text-text-secondary" />
                           </button>
-                          {actionMenuOpen === item.id && (
+                          {actionMenuOpen === idx && (
                             <div className="absolute right-0 mt-2 w-48 bg-dark-card border border-dark-secondary rounded-input shadow-lg z-10">
-                              <button
+                              <Link
+                                to="/dashboard/datasets"
                                 className="w-full px-4 py-2 text-left text-sm text-text-primary hover:bg-dark-secondary flex items-center gap-2"
-                                onClick={() => {
-                                  console.log('Modifica:', item.code);
-                                  setActionMenuOpen(null);
-                                }}
+                                onClick={() => setActionMenuOpen(null)}
                               >
-                                <Edit className="w-4 h-4" />
-                                Modifica
-                              </button>
-                              <button
-                                className="w-full px-4 py-2 text-left text-sm text-text-primary hover:bg-dark-secondary flex items-center gap-2"
-                                onClick={() => {
-                                  console.log('Elimina:', item.code);
-                                  setActionMenuOpen(null);
-                                }}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Elimina
-                              </button>
-                              <button
-                                className="w-full px-4 py-2 text-left text-sm text-text-primary hover:bg-dark-secondary flex items-center gap-2"
-                                onClick={() => {
-                                  console.log('Scarica:', item.code);
-                                  setActionMenuOpen(null);
-                                }}
-                              >
-                                <Download className="w-4 h-4" />
-                                Scarica
-                              </button>
+                                <ExternalLink className="w-4 h-4" />
+                                Vai ai Dataset
+                              </Link>
                             </div>
                           )}
                         </div>
