@@ -99,7 +99,7 @@ async def create_dataset(
 @router.get("", response_model=List[DatasetRequestResponse])
 async def list_datasets(
     skip: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=500),
     status_filter: Optional[str] = None,
     domain_filter: Optional[str] = None,
     start_date: Optional[datetime] = None,
