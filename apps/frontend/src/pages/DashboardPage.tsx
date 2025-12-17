@@ -72,6 +72,7 @@ export default function DashboardPage() {
         id: String(d.id),
         code: String(d.id).slice(0, 8).toUpperCase(),
         name: String(d.title || 'Dataset'),
+        domain: String(d.domain || 'general'),
         createdAt: formatDate(d.created_at),
         createdAtISO: d.created_at ? String(d.created_at) : null,
         price: '-', // prezzo per dataset non esposto lato API
@@ -116,14 +117,24 @@ export default function DashboardPage() {
 
   const growth = 0;
 
-  const sectors = [
-    { label: 'Economics', value: '245', percent: 35.2 },
-    { label: 'Biomedical', value: '189', percent: 27.1 },
-    { label: 'Physics', value: '142', percent: 20.4 },
-    { label: 'Math', value: '78', percent: 11.2 },
-    { label: 'Demography', value: '32', percent: 4.6 },
-    { label: 'General', value: '10', percent: 1.5 },
-  ];
+  const categories = useMemo(() => {
+    const total = totalCreated || 0;
+    const counts = new Map<string, number>();
+    for (const d of allDatasets as any[]) {
+      const key = String(d.domain || 'general')
+        .toLowerCase()
+        .trim();
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    const rows = Array.from(counts.entries())
+      .map(([key, count]) => {
+        const label = key ? key.charAt(0).toUpperCase() + key.slice(1) : 'General';
+        const percent = total > 0 ? (count / total) * 100 : 0;
+        return { label, value: String(count), percent: Math.round(percent * 10) / 10 };
+      })
+      .sort((a, b) => Number(b.value) - Number(a.value));
+    return rows.slice(0, 6);
+  }, [allDatasets, totalCreated]);
 
   const getStatusPill = (status: string) => {
     switch (status) {
@@ -500,7 +511,7 @@ export default function DashboardPage() {
                 <h3 className="text-lg font-semibold text-text-primary">Riepilogo Categorie</h3>
               </div>
             <div className="space-y-3">
-              {sectors.map((item) => (
+              {categories.map((item) => (
                 <div key={item.label}>
                   <div className="flex items-center justify-between text-sm text-text-secondary mb-1">
                     <span>{item.label}</span>
