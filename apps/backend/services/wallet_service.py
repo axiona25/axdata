@@ -1,5 +1,6 @@
 """Wallet service (virtual portfolio)."""
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import ProgrammingError, OperationalError
 from decimal import Decimal
 from uuid import UUID
 from typing import Tuple
@@ -9,10 +10,15 @@ from db.models.wallet import WalletTransaction, WalletTxType, WalletTxStatus
 
 def get_wallet_totals(db: Session, user_id: UUID) -> Tuple[Decimal, Decimal, Decimal]:
     """Return (balance, total_loaded, total_spent) for confirmed transactions."""
-    txs = db.query(WalletTransaction).filter(
-        WalletTransaction.user_id == user_id,
-        WalletTransaction.status == WalletTxStatus.CONFIRMED,
-    ).all()
+    try:
+        txs = db.query(WalletTransaction).filter(
+            WalletTransaction.user_id == user_id,
+            WalletTransaction.status == WalletTxStatus.CONFIRMED,
+        ).all()
+    except (ProgrammingError, OperationalError):
+        # DB not migrated yet (e.g. wallet_transactions missing) -> treat as empty wallet
+        db.rollback()
+        return Decimal("0.00"), Decimal("0.00"), Decimal("0.00")
 
     total_loaded = Decimal("0.00")
     total_spent = Decimal("0.00")

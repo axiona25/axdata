@@ -106,6 +106,19 @@ async def startup_event():
     logger.info(f"Starting backend in {settings.environment} mode")
     logger.info(f"API running on {settings.api_host}:{settings.api_port}")
     
+    # Ensure wallet table exists (dev environments without migrations)
+    try:
+        from sqlalchemy import inspect
+        from db.session import engine
+        from db.models.wallet import WalletTransaction
+
+        insp = inspect(engine)
+        if not insp.has_table("wallet_transactions"):
+            WalletTransaction.__table__.create(bind=engine, checkfirst=True)
+            logger.info("✅ Created wallet_transactions table (dev auto-create)")
+    except Exception as e:
+        logger.warning(f"⚠️ Could not ensure wallet_transactions table: {e}")
+
     # Seed AXDATA logo into DB if missing
     try:
         from db.session import SessionLocal
