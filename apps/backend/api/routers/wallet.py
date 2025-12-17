@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from decimal import Decimal
+import math
 
 from db.session import get_db
 from db.models.user import User
@@ -42,6 +43,8 @@ async def wallet_credit(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Ricarica manuale disponibile solo per l'utente di test. Per gli altri utenti è richiesto un pagamento reale.",
         )
+    if not math.isfinite(payload.amount) or payload.amount <= 0:
+        raise HTTPException(status_code=400, detail="Importo non valido")
     try:
         credit_wallet(db, current_user.id, Decimal(str(payload.amount)), payload.description)
         balance, total_loaded, total_spent = get_wallet_totals(db, current_user.id)

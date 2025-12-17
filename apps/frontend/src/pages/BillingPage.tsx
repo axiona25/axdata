@@ -963,7 +963,10 @@ export default function BillingPage() {
               <input
                 type="number"
                 value={topUpAmount}
-                onChange={(e) => setTopUpAmount(Number(e.target.value))}
+                onChange={(e) => {
+                  const n = Number(e.target.value);
+                  setTopUpAmount(Number.isFinite(n) ? n : 0);
+                }}
                 className="input-field"
                 min={1}
               />
@@ -977,11 +980,12 @@ export default function BillingPage() {
                 Annulla
               </button>
               <button
-                disabled={topUpAmount <= 0 || isTopUping}
+                disabled={!Number.isFinite(topUpAmount) || topUpAmount <= 0 || isTopUping}
                 onClick={async () => {
                   try {
                     setIsTopUping(true);
-                    await api.post('/api/v1/wallet/credit', { amount: topUpAmount, description: 'Test top-up (dev)' });
+                    const amount = Number(topUpAmount.toFixed(2));
+                    await api.post('/api/v1/wallet/credit', { amount, description: 'Test top-up (dev)' });
                     await queryClient.invalidateQueries({ queryKey: ['walletSummary'] });
                     pushToast('Ricarica portfolio effettuata', `Caricati € ${topUpAmount.toFixed(2)}`);
                     setTopUpOpen(false);
