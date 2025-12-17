@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   CreditCard,
   FileText,
@@ -11,6 +11,7 @@ import {
   Hash,
   Package,
   Wallet,
+  Info,
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import { api } from '../lib/api';
@@ -51,6 +52,19 @@ export default function BillingPage() {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const [unitPriceInfoOpen, setUnitPriceInfoOpen] = useState(false);
+  const unitPriceInfoRef = useRef<HTMLSpanElement | null>(null);
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      const target = e.target as Node | null;
+      if (unitPriceInfoRef.current && target && !unitPriceInfoRef.current.contains(target)) {
+        setUnitPriceInfoOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
 
   useEffect(() => {
     const tab = (searchParams.get('tab') || '').toLowerCase();
@@ -768,7 +782,29 @@ export default function BillingPage() {
               </div>
             )}
             <div className="text-xs text-text-secondary">
-              Il prezzo c.u. è calcolato come <span className="text-text-primary font-semibold">Totale / N. Dataset</span>.
+              Il prezzo c.u. è calcolato come{' '}
+              <span ref={unitPriceInfoRef} className="text-text-primary font-semibold inline-flex items-center gap-1 relative">
+                Totale / N. Dataset{' '}
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center"
+                  onClick={() => setUnitPriceInfoOpen((v) => !v)}
+                  aria-label="Informazioni sul prezzo unitario"
+                >
+                  <Info className="w-3.5 h-3.5 opacity-80" />
+                </button>
+                {unitPriceInfoOpen && (
+                  <div className="absolute left-0 top-full mt-2 w-96 max-w-[80vw] bg-dark-card border border-dark-secondary rounded-input shadow-lg p-4 z-50">
+                    <div className="text-sm font-semibold text-text-primary mb-2">Regole di accesso</div>
+                    <ul className="text-xs text-text-secondary space-y-1 list-disc list-inside font-normal">
+                      <li>Puoi generare un dataset anche senza pacchetto.</li>
+                      <li>Senza pacchetto/credito non puoi scaricarlo e l’anteprima sarà limitata (15%) e con filigrane.</li>
+                      <li>Quando acquisti un pacchetto, il contatore crediti scala automaticamente fino a esaurimento.</li>
+                    </ul>
+                  </div>
+                )}
+              </span>
+              .
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {plans.map((p) => {
