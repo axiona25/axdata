@@ -14,7 +14,7 @@ def get_available_packages(db: Session) -> List[DatasetPackage]:
     """Get all active packages."""
     # Only expose commercial packages (Acquisto N. X Dataset) to the UI.
     # This prevents legacy bundles (e.g., Enterprise/Department/Ultra) from appearing.
-    commercial_counts = {1, 3, 5, 10, 20, 50, 100}
+    commercial_counts = {1, 3, 5, 10, 20, 50, 100, 200}
     packages = db.query(DatasetPackage).filter(
         DatasetPackage.is_active == True,
         DatasetPackage.dataset_count.in_(commercial_counts)
@@ -106,6 +106,7 @@ def ensure_default_commercial_packages(db: Session) -> None:
     - 20 x €6
     - 50 x €4.5
     - 100 x €3
+    - 200 x €2.5
     """
     desired = [
         ("Acquisto N. 1 Dataset", 1, 15.0, PackageSize.SINGLE),
@@ -115,6 +116,7 @@ def ensure_default_commercial_packages(db: Session) -> None:
         ("Acquisto N. 20 Dataset", 20, 6.0, PackageSize.XXXL),
         ("Acquisto N. 50 Dataset", 50, 4.5, PackageSize.MEGA),
         ("Acquisto N. 100 Dataset", 100, 3.0, PackageSize.ULTRA),
+        ("Acquisto N. 200 Dataset", 200, 2.5, PackageSize.HYPER),
     ]
 
     all_pkgs = db.query(DatasetPackage).all()

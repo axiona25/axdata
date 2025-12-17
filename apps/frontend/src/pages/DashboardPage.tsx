@@ -158,7 +158,7 @@ export default function DashboardPage() {
     const promosRaw = Array.isArray(packagesData?.packages) ? packagesData.packages : [];
     const promos = promosRaw
       .filter((p: any) => Boolean(p?.is_active))
-      .filter((p: any) => Number(p?.dataset_count ?? 0) === 50 || Number(p?.dataset_count ?? 0) === 100)
+      .filter((p: any) => [50, 100, 200].includes(Number(p?.dataset_count ?? 0)))
       .map((p: any) => ({
         kind: 'promo' as const,
         title: 'Promo disponibile',

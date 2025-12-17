@@ -19,6 +19,7 @@ class PackageSize(str, enum.Enum):
     XXXL = "20"
     MEGA = "50"
     ULTRA = "100"
+    HYPER = "200"
 
 
 class PackageStatus(str, enum.Enum):

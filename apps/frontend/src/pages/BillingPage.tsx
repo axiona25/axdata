@@ -810,7 +810,7 @@ export default function BillingPage() {
               {plans.map((p) => {
                 const total = p.totalPrice;
                 const canBuy = walletBalance >= total;
-                const isNew = p.datasets === 50 || p.datasets === 100;
+                const isNew = p.datasets === 50 || p.datasets === 100 || p.datasets === 200;
                 return (
                   <div key={p.id} className="card border" style={{ borderColor: '#007ed2' }}>
                     <div className="flex items-start justify-between gap-3">
@@ -858,15 +858,6 @@ export default function BillingPage() {
               })}
             </div>
 
-            {/* Rules */}
-            <div className="card border" style={{ borderColor: '#007ed2' }}>
-              <h3 className="text-lg font-semibold text-text-primary mb-2">Regole di accesso</h3>
-              <ul className="text-sm text-text-secondary space-y-1 list-disc list-inside">
-                <li>Puoi generare un dataset anche senza pacchetto.</li>
-                <li>Senza pacchetto/credito non puoi scaricarlo e l’anteprima sarà limitata (15%) e con filigrane.</li>
-                <li>Quando acquisti un pacchetto, il contatore crediti scala automaticamente fino a esaurimento.</li>
-              </ul>
-            </div>
           </div>
         )}
       </div>
