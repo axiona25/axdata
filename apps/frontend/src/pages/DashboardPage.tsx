@@ -515,8 +515,13 @@ export default function DashboardPage() {
         {/* Datasets table + Traffic */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
           <div 
-            className="card xl:col-span-2 border"
-            style={{ borderColor: '#007ed2', marginRight: '-85px', width: 'calc(100% + 85px)' }}
+            className="card xl:col-span-2 border flex flex-col"
+            style={{
+              borderColor: '#007ed2',
+              marginRight: '-85px',
+              width: 'calc(100% + 85px)',
+              minHeight: '420px', // +100px: show 6 rows comfortably
+            }}
           >
             <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
               <div className="flex items-center gap-2">
@@ -525,7 +530,7 @@ export default function DashboardPage() {
             </div>
 
             {totalCreated === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-center">
+              <div className="flex flex-col items-center justify-center flex-1 text-center">
                 <Database className="w-12 h-12 text-text-secondary/70 mb-3" />
                 <div className="text-sm font-semibold text-text-primary">Nessun dataset ancora</div>
                 <div className="text-xs text-text-secondary mt-1">
@@ -533,7 +538,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto flex-1">
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="text-text-secondary border-b border-dark-secondary">
@@ -594,13 +599,17 @@ export default function DashboardPage() {
           </div>
 
           <div 
-            className="card border ml-auto"
-            style={{ borderColor: '#007ed2', width: 'calc(100% - 100px)' }}
+            className="card border ml-auto flex flex-col"
+            style={{
+              borderColor: '#007ed2',
+              width: 'calc(100% - 100px)',
+              minHeight: '420px', // +100px: match recent datasets box
+            }}
           >
               <div className="mb-2">
                 <h3 className="text-lg font-semibold text-text-primary">Riepilogo Categorie</h3>
               </div>
-            <div className="space-y-2">
+            <div className="space-y-2 flex-1 flex flex-col justify-start">
               {categories.map((item) => (
                 <div key={item.label}>
                   <div className="flex items-center justify-between text-sm text-text-secondary mb-1">
