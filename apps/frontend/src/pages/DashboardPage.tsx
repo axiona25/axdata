@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   MessageSquare,
@@ -48,6 +48,21 @@ export default function DashboardPage() {
     queryFn: async () => (await api.get('/api/v1/wallet/summary')).data,
     enabled: !!localStorage.getItem('access_token'),
     retry: 1,
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: packagesData } = useQuery({
+    queryKey: ['packagesCatalog'],
+    queryFn: async () => (await api.get('/api/v1/packages')).data,
+    enabled: !!localStorage.getItem('access_token'),
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: myPackagesData } = useQuery({
+    queryKey: ['myPackages'],
+    queryFn: async () => (await api.get('/api/v1/packages/my-packages')).data,
+    enabled: !!localStorage.getItem('access_token'),
+    retry: 0,
     refetchOnWindowFocus: true,
   });
 
@@ -116,6 +131,64 @@ export default function DashboardPage() {
   );
 
   const growth = 0;
+
+  type PlanSlide = {
+    kind: 'owned' | 'promo';
+    title: string;
+    subtitle: string;
+    meta?: string;
+  };
+
+  const planSlides: PlanSlide[] = useMemo(() => {
+    const owned = Array.isArray(myPackagesData)
+      ? myPackagesData.map((up: any) => {
+          const pkg = up?.package;
+          const name = String(pkg?.name || 'Pacchetto');
+          const remaining = Number(up?.remaining_datasets ?? 0);
+          const total = Number(up?.total_datasets ?? pkg?.dataset_count ?? 0);
+          return {
+            kind: 'owned' as const,
+            title: 'Piano acquistato',
+            subtitle: name,
+            meta: `Crediti: ${remaining}/${total}`,
+          };
+        })
+      : [];
+
+    const promosRaw = Array.isArray(packagesData?.packages) ? packagesData.packages : [];
+    const promos = promosRaw
+      .filter((p: any) => Boolean(p?.is_active))
+      .filter((p: any) => Number(p?.dataset_count ?? 0) === 50 || Number(p?.dataset_count ?? 0) === 100)
+      .map((p: any) => ({
+        kind: 'promo' as const,
+        title: 'Promo disponibile',
+        subtitle: String(p?.name || 'Piano'),
+        meta: `€ ${Number(p?.price ?? 0).toLocaleString('it-IT')} · ${Number(p?.dataset_count ?? 0)} dataset`,
+      }));
+
+    const merged = [...owned, ...promos];
+    if (merged.length > 0) return merged;
+    return [
+      {
+        kind: 'promo',
+        title: 'Piani disponibili',
+        subtitle: 'Scopri i pacchetti e attiva nuovi crediti',
+        meta: 'Vai alla gestione piani',
+      },
+    ];
+  }, [myPackagesData, packagesData]);
+
+  const [planSlideIndex, setPlanSlideIndex] = useState(0);
+
+  useEffect(() => {
+    if (planSlides.length <= 1) return;
+    const t = window.setInterval(() => {
+      setPlanSlideIndex((i) => (i + 1) % planSlides.length);
+    }, 4500);
+    return () => window.clearInterval(t);
+  }, [planSlides.length]);
+
+  const activePlanSlide = planSlides[planSlideIndex] ?? planSlides[0];
 
   const categories = useMemo(() => {
     const total = totalCreated || 0;
@@ -252,12 +325,17 @@ export default function DashboardPage() {
             }}
           >
             <div>
-              <div className="text-xl opacity-90 font-semibold -mt-2 mb-3">Pacchetto Premium 2025</div>
-              <div className="text-base font-semibold">Bundle Premium 50 Dataset</div>
-              <div className="text-xs opacity-80 mt-3 inline-flex items-center gap-2 px-3 py-2 bg-white rounded-full w-fit font-bold" style={{ color: '#fa9f2a' }}>
+              <div className="text-xl opacity-90 font-semibold -mt-2 mb-3">{activePlanSlide?.title ?? 'Piani'}</div>
+              <div className="text-base font-semibold">{activePlanSlide?.subtitle ?? '-'}</div>
+              <div className="text-xs opacity-80 mt-2">{activePlanSlide?.meta ?? ''}</div>
+              <Link
+                to="/dashboard/billing?tab=plans#plans"
+                className="text-xs opacity-80 mt-3 inline-flex items-center gap-2 px-3 py-2 bg-white rounded-full w-fit font-bold"
+                style={{ color: '#fa9f2a' }}
+              >
                 <ArrowUpRight className="w-4 h-4" style={{ color: '#fa9f2a' }} />
                 Fai Upgrade
-              </div>
+              </Link>
             </div>
             <div className="p-3 bg-white/10 rounded-full">
               <Package className="w-6 h-6" />

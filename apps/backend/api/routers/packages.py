@@ -93,6 +93,46 @@ async def get_my_active_package(
     )
 
 
+@router.get("/my-packages", response_model=List[UserPackageResponse])
+async def get_my_packages(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Get all user's purchased packages (history), newest first."""
+    user_packages = (
+        db.query(UserPackage)
+        .filter(UserPackage.user_id == current_user.id)
+        .order_by(UserPackage.purchased_at.desc())
+        .all()
+    )
+
+    return [
+        UserPackageResponse(
+            id=up.id,
+            user_id=up.user_id,
+            package=DatasetPackageResponse(
+                id=up.package.id,
+                name=up.package.name,
+                size=up.package.size,
+                dataset_count=up.package.dataset_count,
+                price=float(up.package.price),
+                currency=up.package.currency,
+                description=up.package.description,
+                is_active=up.package.is_active,
+            ),
+            selected_domains=up.selected_domains,
+            total_datasets=up.total_datasets,
+            remaining_datasets=up.remaining_datasets,
+            used_datasets=up.used_datasets,
+            status=up.status,
+            purchased_at=up.purchased_at,
+            expires_at=up.expires_at,
+            activated_at=up.activated_at,
+        )
+        for up in user_packages
+    ]
+
+
 @router.post("/select", response_model=UserPackageResponse, status_code=status.HTTP_201_CREATED)
 async def select_package(
     selection: PackageSelectionRequest,

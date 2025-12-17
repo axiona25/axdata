@@ -15,6 +15,7 @@ import {
 import Layout from '../components/Layout';
 import { api } from '../lib/api';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 type PaymentMethod = 'stripe' | 'paypal' | null;
 type PersonType = 'fisica' | 'giuridica';
@@ -48,6 +49,16 @@ export default function BillingPage() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('stripe');
 
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+
+  useEffect(() => {
+    const tab = (searchParams.get('tab') || '').toLowerCase();
+    if (tab === 'plans') setActiveTab('plans');
+    if (tab === 'payments') setActiveTab('payments');
+    if (tab === 'invoices') setActiveTab('invoices');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   // Wallet (shared with header)
   const { data: walletSummary } = useQuery({
@@ -723,7 +734,7 @@ export default function BillingPage() {
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-6" id="plans">
             {/* Wallet summary */}
             <div className="card border" style={{ borderColor: '#007ed2' }}>
               <div className="flex items-center justify-between">
