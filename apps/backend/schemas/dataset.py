@@ -24,6 +24,7 @@ class DatasetRequestResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     step_count: Optional[int] = 0
+    progress_pct: Optional[int] = 0
     
     class Config:
         from_attributes = True

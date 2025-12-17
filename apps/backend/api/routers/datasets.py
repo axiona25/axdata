@@ -150,7 +150,20 @@ async def list_datasets(
             error_message=d.error_message,
             created_at=d.created_at,
             updated_at=d.updated_at,
-            step_count=len(d.steps)
+            step_count=len(d.steps),
+            progress_pct=(
+                0
+                if len(d.steps) == 0
+                else int(
+                    round(
+                        (
+                            sum(1 for s in d.steps if s.status.value in ["success", "failed"])
+                            / max(len(d.steps), 1)
+                        )
+                        * 100
+                    )
+                )
+            ),
         )
         for d in datasets
     ]

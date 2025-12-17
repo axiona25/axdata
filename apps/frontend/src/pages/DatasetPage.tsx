@@ -36,6 +36,7 @@ export default function DatasetPage() {
     createdAt: string;
     price: string;
     status: 'paid' | 'to_pay' | 'processing';
+    progressPct: number;
   };
 
   const mapStatus = (s: string): DatasetRow['status'] => {
@@ -68,8 +69,21 @@ export default function DatasetPage() {
         createdAt: formatDate(d.created_at),
         price: '-', // Prezzo per dataset non ancora esposto: gestito da pacchetti
         status: mapStatus(String(d.status)),
+        progressPct: Number(d.progress_pct ?? 0),
       }))
     : [];
+
+  const ProgressCell = ({ pct }: { pct: number }) => {
+    const v = Math.max(0, Math.min(100, Number.isFinite(pct) ? pct : 0));
+    return (
+      <div className="flex items-center gap-2 min-w-[130px]">
+        <div className="h-2 w-24 bg-dark-secondary rounded-full overflow-hidden">
+          <div className="h-2 bg-accent-blue" style={{ width: `${v}%` }} />
+        </div>
+        <div className="text-xs text-text-secondary tabular-nums w-9 text-right">{v}%</div>
+      </div>
+    );
+  };
 
   const getStatusPill = (status: string) => {
     switch (status) {
@@ -301,6 +315,7 @@ export default function DatasetPage() {
                   <th className="py-3">Data di creazione</th>
                   <th className="py-3">Prezzo pagato</th>
                   <th className="py-3">Stato</th>
+                  <th className="py-3">Avanzamento</th>
                   <th className="py-3">Dataset</th>
                   <th className="py-3">Azioni</th>
                 </tr>
@@ -315,6 +330,9 @@ export default function DatasetPage() {
                         <td className="py-3">{item.createdAt}</td>
                         <td className="py-3">{item.price}</td>
                         <td className="py-3">{getStatusPill(item.status)}</td>
+                        <td className="py-3">
+                          <ProgressCell pct={item.progressPct} />
+                        </td>
                         <td className="py-3">
                           <button
                             className="p-2 rounded-input hover:bg-dark-secondary transition-colors"
