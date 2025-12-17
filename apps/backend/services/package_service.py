@@ -116,7 +116,9 @@ def ensure_default_commercial_packages(db: Session) -> None:
         ("Acquisto N. 20 Dataset", 20, 6.0, PackageSize.XXXL),
         ("Acquisto N. 50 Dataset", 50, 4.5, PackageSize.MEGA),
         ("Acquisto N. 100 Dataset", 100, 3.0, PackageSize.ULTRA),
-        ("Acquisto N. 200 Dataset", 200, 2.5, PackageSize.HYPER),
+        # NOTE: keep size on an existing enum value to avoid DB enum mismatch in dev
+        # (alembic may not be installed in the current runtime environment).
+        ("Acquisto N. 200 Dataset", 200, 2.5, PackageSize.ULTRA),
     ]
 
     all_pkgs = db.query(DatasetPackage).all()
