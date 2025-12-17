@@ -17,6 +17,7 @@ import Layout from '../components/Layout';
 import { api } from '../lib/api';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useSearchParams } from 'react-router-dom';
+import { authApi } from '../lib/auth';
 
 type PaymentMethod = 'stripe' | 'paypal' | null;
 type PersonType = 'fisica' | 'giuridica';
@@ -79,6 +80,15 @@ export default function BillingPage() {
     queryKey: ['walletSummary'],
     queryFn: async () => (await api.get('/api/v1/wallet/summary')).data,
   });
+
+  const { data: currentUser } = useQuery({
+    queryKey: ['user'],
+    queryFn: authApi.getCurrentUser,
+    enabled: !!localStorage.getItem('access_token'),
+    retry: false,
+  });
+
+  const canManualTopUp = (currentUser?.email || '').toLowerCase() === 'r.amoroso80@gmail.com';
 
   // Packages list
   const { data: packagesData, isLoading: isLoadingPlans, error: plansErrorObj } = useQuery({
@@ -767,7 +777,13 @@ export default function BillingPage() {
                   </div>
                   <button
                     onClick={() => setTopUpOpen(true)}
-                    className="px-4 py-2 bg-accent-blue text-white rounded-input hover:bg-accent-blue/90 transition-colors"
+                    disabled={!canManualTopUp}
+                    className="px-4 py-2 bg-accent-blue text-white rounded-input hover:bg-accent-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={
+                      canManualTopUp
+                        ? 'Ricarica manuale (solo test)'
+                        : 'Per questo account la ricarica richiede un pagamento reale'
+                    }
                   >
                     Ricarica portfolio
                   </button>

@@ -11,6 +11,7 @@ from services.wallet_service import get_wallet_totals, credit_wallet
 
 router = APIRouter(prefix="/api/v1/wallet", tags=["wallet"])
 
+TEST_TOPUP_EMAIL = "r.amoroso80@gmail.com"
 
 @router.get("/summary", response_model=WalletSummaryResponse)
 async def wallet_summary(
@@ -36,6 +37,11 @@ async def wallet_credit(
     Credit wallet (temporary endpoint).
     In production this should be done only after payment provider confirms the top-up.
     """
+    if (current_user.email or "").lower() != TEST_TOPUP_EMAIL:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Ricarica manuale disponibile solo per l'utente di test. Per gli altri utenti è richiesto un pagamento reale.",
+        )
     try:
         credit_wallet(db, current_user.id, Decimal(str(payload.amount)), payload.description)
         balance, total_loaded, total_spent = get_wallet_totals(db, current_user.id)
