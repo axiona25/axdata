@@ -24,6 +24,7 @@ from schemas.dataset_plan import DatasetPlan
 from schemas.ds_spec_schema import DatasetSpecCreate, DatasetSpecResponse
 from services.axdata_service import convert_dataset_plan_to_ds_spec, create_dataset_with_axdata_pipeline
 from db.models.payment import Payment, PaymentStatus
+from services.preview_service import get_dataset_preview
 
 logger = logging.getLogger(__name__)
 
@@ -191,6 +192,34 @@ async def dataset_access(
         "watermark": False if is_unlocked else True,
         "message": "OK" if is_unlocked else "Preview limited. Purchase a package to unlock full access."
     }
+
+
+@router.get("/{dataset_id}/preview")
+async def dataset_preview(
+    dataset_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Real preview rows extracted from bundle.
+
+    Returns:
+    - meta: { can_download, preview_percent, watermark, ... }
+    - rows: list of dict rows (already gated when locked)
+    """
+    try:
+        meta, rows = get_dataset_preview(
+            db=db,
+            dataset_id=uuid.UUID(dataset_id),
+            user_id=current_user.id,
+            max_rows=100,
+        )
+        return {"meta": meta, "rows": rows}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error generating preview for dataset {dataset_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error generating dataset preview")
 
 
 @router.get("/{dataset_id}", response_model=DatasetRequestDetailResponse)

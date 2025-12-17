@@ -144,26 +144,22 @@ export default function DatasetPage() {
     };
   }, []);
 
-  const { data: accessPolicy } = useQuery({
-    queryKey: ['datasetAccess', selectedDatasetId],
-    queryFn: async () => (await api.get(`/api/v1/datasets/${selectedDatasetId}/access`)).data,
+  const { data: previewData } = useQuery({
+    queryKey: ['datasetPreview', selectedDatasetId],
+    queryFn: async () => (await api.get(`/api/v1/datasets/${selectedDatasetId}/preview`)).data,
     enabled: !!selectedDatasetId && previewOpen,
   });
 
-  const previewPercent = Number(accessPolicy?.preview_percent ?? 15);
-  const watermark = Boolean(accessPolicy?.watermark ?? true);
-  const canDownload = Boolean(accessPolicy?.can_download ?? false);
+  const previewPercent = Number(previewData?.meta?.preview_percent ?? 15);
+  const watermark = Boolean(previewData?.meta?.watermark ?? true);
+  const canDownload = Boolean(previewData?.meta?.can_download ?? false);
+  const previewRows: Array<Record<string, any>> = Array.isArray(previewData?.rows) ? previewData.rows : [];
 
-  const sampleRows = useMemo(() => {
-    const total = 40;
-    const visible = Math.max(1, Math.round((previewPercent / 100) * total));
-    return Array.from({ length: total }).map((_, i) => ({
-      idx: i + 1,
-      valueA: `Valore_${i + 1}`,
-      valueB: `Metric_${(i + 1) * 3}`,
-      visible: i < visible,
-    }));
-  }, [previewPercent]);
+  const previewColumns = useMemo(() => {
+    const first = previewRows[0];
+    if (!first) return [];
+    return Object.keys(first).slice(0, 8); // keep UI compact
+  }, [previewRows]);
 
   const handleDownload = async (datasetId: string) => {
     try {
@@ -462,18 +458,30 @@ export default function DatasetPage() {
                     <thead>
                       <tr className="text-text-secondary border-b border-dark-secondary">
                         <th className="py-3 px-4">#</th>
-                        <th className="py-3 px-4">Campo A</th>
-                        <th className="py-3 px-4">Campo B</th>
+                        {previewColumns.map((c) => (
+                          <th key={c} className="py-3 px-4">{c}</th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-dark-secondary">
-                      {sampleRows.map((r) => (
-                        <tr key={r.idx} className="text-text-primary">
-                          <td className="py-3 px-4">{r.idx}</td>
-                          <td className={`py-3 px-4 ${r.visible ? '' : 'blur-sm select-none'}`}>{r.valueA}</td>
-                          <td className={`py-3 px-4 ${r.visible ? '' : 'blur-sm select-none'}`}>{r.valueB}</td>
+                      {previewRows.length === 0 ? (
+                        <tr className="text-text-primary">
+                          <td className="py-3 px-4 text-text-secondary" colSpan={previewColumns.length + 1}>
+                            Anteprima non disponibile (dataset in elaborazione o bundle non pronto).
+                          </td>
                         </tr>
-                      ))}
+                      ) : (
+                        previewRows.map((r, idx) => (
+                          <tr key={idx} className="text-text-primary">
+                            <td className="py-3 px-4">{idx + 1}</td>
+                            {previewColumns.map((c) => (
+                              <td key={c} className={`py-3 px-4 ${!canDownload ? 'blur-sm select-none' : ''}`}>
+                                {String(r?.[c] ?? '')}
+                              </td>
+                            ))}
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
